@@ -32,8 +32,7 @@ jobs:
         id: set-version
         shell: bash
         run: |
-          BASE_VERSION=$(node -p "require('./package.json').version" | cut -d'.' -f1,2)
-          NEW_VERSION="${BASE_VERSION}.${{ github.run_number }}"
+          NEW_VERSION=$(node -e "const pkg = require('./package.json'); const parts = pkg.version.split('.'); console.log(\`\${parts[0]}.\${parts[1]}.${{ github.run_number }}\`) ")
           echo "New Version: $NEW_VERSION"
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
