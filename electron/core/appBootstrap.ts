@@ -1,4 +1,4 @@
-import { app, type BrowserWindow } from 'electron'
+import { app, type BrowserWindow, dialog } from 'electron'
 import { initLogger, logger as log } from '../utils/logger'
 import { createMainWindow, createTray, buildAppMenu } from '../services/ui'
 import { initStorageDirs } from '../infrastructure/storage'
@@ -83,12 +83,18 @@ export async function bootstrap(): Promise<void> {
       await initStorageDirs()
     } catch (err) {
       log.error('[Bootstrap] 存储目录初始化失败:', err)
+      dialog.showErrorBox('启动失败', `存储目录初始化失败: ${err instanceof Error ? err.message : String(err)}`)
+      app.quit()
+      return
     }
 
     try {
       initDB()
     } catch (err) {
       log.error('[Bootstrap] 数据库初始化失败:', err)
+      dialog.showErrorBox('数据库错误', `无法初始化数据库: ${err instanceof Error ? err.message : String(err)}\n\n这可能是因为已有另一个应用实例正在运行，请先彻底关闭应用后再尝试。`)
+      app.quit()
+      return
     }
 
     try {

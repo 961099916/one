@@ -47,7 +47,7 @@ app.mount('#app').$nextTick(async () => {
 
     // 监听更新状态推送
     if (window.electronAPI.updater) {
-      window.electronAPI.updater.onStatus(statusData => {
+      window.electronAPI.updater.onStatus((statusData: any) => {
         const statusMap: Record<string, 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error'> = {
           checking: 'checking',
           available: 'available',
@@ -56,7 +56,7 @@ app.mount('#app').$nextTick(async () => {
           downloaded: 'downloaded',
           error: 'error',
         }
-        appStore.setUpdateStatus(statusMap[statusData.type] ?? 'idle', statusData)
+        appStore.setUpdateStatus(statusMap[statusData.status] ?? 'idle', statusData)
       })
 
       // 自动检查更新（若开启）
