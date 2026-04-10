@@ -106,15 +106,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y rpm fakeroot dpkg
 
-      - name: Install Dependencies
+      - name: Force npm 10 & Sanitize Package
         run: |
-          node -v
-          npm -v
-          npm config list
-          echo "--- npm_config env vars ---"
-          env | grep -i npm_ || true
-          echo "--- end ---"
-          npm install --ignore-scripts
+          npm install -g npm@10
+          # Remove any potential hidden \r characters and BOM
+          tr -d '\r' < package.json > package.json.tmp && mv package.json.tmp package.json
+          npm install
 
       - name: Set Release Version
         shell: bash
