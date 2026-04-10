@@ -154,11 +154,4 @@ export const IpcChannel = {
   // 同花顺联动
   OPEN_TONGHUASHUN_STOCK: 'open-tonghuashun-stock',
   OPEN_TONGHUASHUN_APP: 'open-tonghuashun-app',
-
-  // 定时任务
-  CRON_LIST: 'cron:list',
-  CRON_CREATE: 'cron:create',
-  CRON_UPDATE: 'cron:update',
-  CRON_DELETE: 'cron:delete',
-  CRON_TOGGLE: 'cron:toggle',
 } as const

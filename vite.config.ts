@@ -46,7 +46,7 @@ export default defineConfig({
         vite: {
           build: {
             rollupOptions: {
-              external: ['@xenova/transformers', 'better-sqlite3', /^onnxruntime-node/, 'node-llama-cpp', 'node-cron'],
+              external: ['@xenova/transformers', 'better-sqlite3', /^onnxruntime-node/, 'node-llama-cpp'],
             },
           },
           resolve: {
@@ -61,7 +61,7 @@ export default defineConfig({
         vite: {
             build: {
               rollupOptions: {
-                external: ['@xenova/transformers', 'better-sqlite3', /^onnxruntime-node/, 'node-llama-cpp', 'node-cron'],
+                external: ['@xenova/transformers', 'better-sqlite3', /^onnxruntime-node/, 'node-llama-cpp'],
                 output: {
                   format: 'esm',
                   entryFileNames: '[name].mjs',

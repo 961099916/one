@@ -3,7 +3,6 @@ import { initAppHandlers } from './appHandlers'
 import { initTongHuaShunHandlers } from './tonghuashunHandlers'
 import { initDbHandlers } from './dbHandlers'
 import { initFileHandlers } from './fileHandlers'
-import { initCronHandlers } from './cronHandlers'
 import { initUpdateHandlers } from './updateHandlers'
 
 export function initAllHandlers(): void {
@@ -13,7 +12,6 @@ export function initAllHandlers(): void {
   initFileHandlers()
   initAppHandlers()
   initTongHuaShunHandlers()
-  initCronHandlers()
   initUpdateHandlers()
 
   log.info('[IPCRegistry] 所有 IPC 处理器初始化完成')

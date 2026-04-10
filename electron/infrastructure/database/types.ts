@@ -25,14 +25,4 @@ export interface MarketDataRow {
   created_at: number
 }
 
-export interface ScheduledTaskRow {
-  id: number
-  name: string
-  cron_expression: string
-  task_type: string
-  enabled: number
-  last_run_at: number | null
-  next_run_at: number | null
-  created_at: number
-  updated_at: number
 }

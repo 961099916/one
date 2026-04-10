@@ -8,8 +8,6 @@ import { initModelIpcHandlers } from '../handlers/model.handler'
 import { windowStateOps } from '../infrastructure/store'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { initCronService, cronOps, closeCronService } from './cronService'
-import { registerAllTaskHandlers } from '../services/tasks/register'
 import { UpdateService } from '../services/core/updateService'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -97,14 +95,6 @@ export async function bootstrap(): Promise<void> {
       return
     }
 
-    try {
-      initCronService()
-      registerAllTaskHandlers()
-      cronOps.loadAndScheduleAll()
-    } catch (err) {
-      log.error('[Bootstrap] 定时任务服务初始化失败:', err)
-    }
-
     initAllHandlers()
     buildAppMenu()
 
@@ -152,7 +142,6 @@ export async function bootstrap(): Promise<void> {
   })
 
   app.on('will-quit', () => {
-    closeCronService()
     closeDB()
   })
 }

@@ -33,21 +33,6 @@ export function createTables(): void {
     )
   `)
 
-  // 定时任务表
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS scheduled_tasks (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL UNIQUE,
-      cron_expression TEXT NOT NULL,
-      task_type TEXT NOT NULL,
-      enabled INTEGER DEFAULT 1,
-      last_run_at INTEGER,
-      next_run_at INTEGER,
-      created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL
-    )
-  `)
-
   // 市场数据表（涨停/跌停数据）
   db.exec(`
     CREATE TABLE IF NOT EXISTS market_data (

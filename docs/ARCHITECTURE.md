@@ -4,7 +4,6 @@
 - [整体架构](#整体架构)
 - [IPC 通信流程](#ipc-通信流程)
 - [聊天请求流程](#聊天请求流程)
-- [定时任务流程](#定时任务流程)
 - [持久化方案](#持久化方案)
 
 ---
@@ -39,7 +38,6 @@
 │  │  │ fileHandlers.ts     (文件操作)                                         │  │  │
 │  │  │ modelHandlers.ts    (模型管理)                                         │  │  │
 │  │  │ tonghuashunHandlers.ts (同花顺联动)                                     │  │  │
-│  │  │ cronHandlers.ts     (定时任务)                                         │  │  │
 │  │  └──────────────────────────────────────────────────────────────────────┘  │  │
 │  └──────────────────────────────────┼──────────────────────────────────────────┘  │
 │                                     │                                             │
@@ -50,7 +48,6 @@
 │  │  │ WindowManager.ts  (窗口管理)                                           │  │  │
 │  │  │ TrayManager.ts    (系统托盘)                                           │  │  │
 │  │  │ MenuBuilder.ts    (菜单构建)                                           │  │  │
-│  │  │ CronService.ts    (定时任务调度)                                       │  │  │
 │  │  │ TongHuaShunService.ts (同花顺联动)                                     │  │  │
 │  │  │ XuanguBaoService.ts   (选股通数据抓取) ✨                              │  │  │
 │  │  └──────────────────────────────────────────────────────────────────────┘  │  │
@@ -62,7 +59,6 @@
 │  │  │ SQLite (better-sqlite3)                                                │  │  │
 │  │  │   - sessions (会话表)                                                  │  │  │
 │  │  │   - messages (消息表)                                                  │  │  │
-│  │  │   - scheduled_tasks (定时任务表)                                      │  │  │
 │  │  │                                                                         │  │  │
 │  │  │ electron-store (配置存储)                                               │  │  │
 │  │  │   - 窗口状态                                                           │  │  │
@@ -244,80 +240,6 @@ sequenceDiagram
 
 ---
 
-## ⏰ 定时任务流程
-
-### 初始化流程
-
-```
-应用启动
-   │
-   ▼
-initBootstrap()
-   │
-   ├─► initStorageDirs()  [初始化存储目录]
-   │
-   ├─► initDB()           [初始化 SQLite 数据库]
-   │      │
-   │      └─► 创建 scheduled_tasks 表
-   │
-   ├─► initCronService()  [初始化定时任务服务]
-   │      │
-   │      └─► 获取数据库实例
-   │
-   ├─► cronOps.loadAndScheduleAll()
-   │      │
-   │      ├─► 从数据库加载所有任务
-   │      │
-   │      └─► 对每个 enabled=true 的任务
-   │              │
-   │              └─► cron.schedule() 调度
-   │
-   └─► 应用正常运行
-```
-
-### 任务执行流程
-
-```
-Cron 表达式触发时间到达
-   │
-   ▼
-node-cron 调度器触发
-   │
-   ▼
-cronOps.executeTask(task)
-   │
-   ├─► 记录日志
-   │
-   ├─► 更新数据库 last_run_at
-   │
-   ├─► 根据 taskType 执行不同逻辑
-   │      │
-   │      ├─► 'cleanup' → 清理任务
-   │      │
-   │      ├─► 'backup' → 备份任务
-   │      │
-   │      └─► 其他 → 警告日志
-   │
-   └─► 异常捕获和日志记录
-```
-
-### 任务管理流程（渲染进程调用）
-
-```
-渲染进程                          主进程
-   │                               │
-   │  invoke('cron:create', data) │
-   │  ───────────────────────────► │
-   │                               │
-   │                          cronOps.create(data)
-   │                          - 插入数据库
-   │                          - 如果 enabled=true，立即调度
-   │                               │
-   │  返回创建的任务对象           │
-   │  ◄─────────────────────────── │
-   │                               │
-```
-
 ---
 
 ## 📊 市场数据同步流程
@@ -341,21 +263,6 @@ sequenceDiagram
     UI->>UI: 自动 fetchData() 刷新表格
 ```
 
-### 2. 定时同步（Cron 触发）
-
-```mermaid
-sequenceDiagram
-    participant Cron as CronService
-    participant Task as syncMarketDataTask.ts
-    participant Svc as XuanguBaoService
-    participant DB as SQLite
-    
-    Cron->>Cron: 触发定时任务 (sync_market_data)
-    Cron->>Task: execute()
-    Task->>Svc: getMarketIndicator(today)
-    Svc-->>Task: 响应数据
-    Task->>DB: marketDataOps.save()
-    Task->>Cron: 完成任务
 ```
 
 ---
@@ -367,7 +274,7 @@ sequenceDiagram
 | 层级 | 技术 | 用途 | 存储位置 |
 |------|------|------|----------|
 | **配置层** | electron-store | 简单键值配置 | userData/app-config.json |
-| **业务层** | better-sqlite3 | 会话、消息、定时任务 | userData/database.sqlite |
+| **业务层** | better-sqlite3 | 会话、消息 | userData/database.sqlite |
 | **文件层** | Node.js fs | 模型、图片、文件 | userData/storage/ |
 
 ### 数据库表结构
@@ -397,21 +304,6 @@ CREATE INDEX idx_messages_session_id ON messages(session_id);
 CREATE INDEX idx_messages_created_at ON messages(created_at ASC);
 ```
 
-#### scheduled_tasks（定时任务表）
-```sql
-CREATE TABLE scheduled_tasks (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE,
-  cron_expression TEXT NOT NULL,
-  task_type TEXT NOT NULL,
-  enabled INTEGER DEFAULT 1,
-  last_run_at INTEGER,
-  next_run_at INTEGER,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-```
-
 ---
 
 ## 📁 文件结构
@@ -427,15 +319,13 @@ one/
 │   │   └── fileStorage.ts      # 文件存储
 │   ├── services/               # 服务层
 │   │   ├── core/               # 核心服务
-│   │   │   ├── appBootstrap.ts # 应用启动引导
-│   │   │   └── cronService.ts  # 定时任务服务 ✨
+│   │   │   └── appBootstrap.ts # 应用启动引导
 │   │   ├── ipc/                # IPC 处理器
 │   │   │   ├── ipcRegistry.ts  # 注册中心
 │   │   │   ├── appHandlers.ts
 │   │   │   ├── dbHandlers.ts
 │   │   │   ├── fileHandlers.ts
-│   │   │   ├── tonghuashunHandlers.ts
-│   │   │   └── cronHandlers.ts # 定时任务 IPC ✨
+│   │   │   └── tonghuashunHandlers.ts
 │   │   ├── models/             # 模型服务
 │   │   │   └── modelService.ts
 │   │   ├── storage/            # 存储服务

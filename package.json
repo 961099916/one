@@ -24,7 +24,6 @@
     "rebuild": "electron-rebuild -f -w better-sqlite3"
   },
   "dependencies": {
-    "@types/node-cron": "^3.0.11",
     "@vicons/ionicons5": "^0.13.0",
     "@vueuse/core": "^10.9.0",
     "better-sqlite3": "^12.8.0",
@@ -37,7 +36,6 @@
     "lodash-es": "^4.17.21",
     "markdown-it": "^14.1.1",
     "naive-ui": "^2.38.1",
-    "node-cron": "^4.2.1",
     "node-llama-cpp": "^3.18.1",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.1",
