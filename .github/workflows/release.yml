@@ -106,14 +106,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y rpm fakeroot dpkg
 
-      - name: Pin npm version
-        run: npm install -g npm@10
-
       - name: Install Dependencies
         run: |
           node -v
           npm -v
-          npm install
+          npm config list
+          echo "--- npm_config env vars ---"
+          env | grep -i npm_ || true
+          echo "--- end ---"
+          npm install --ignore-scripts
 
       - name: Set Release Version
         shell: bash
