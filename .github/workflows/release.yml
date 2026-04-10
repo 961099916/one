@@ -32,7 +32,8 @@ jobs:
         id: set-version
         shell: bash
         run: |
-          NEW_VERSION=$(node -e "const pkg = require('./package.json'); const parts = pkg.version.split('.'); console.log(\`\${parts[0]}.\${parts[1]}.${{ github.run_number }}\`) ")
+          BASE_VERSION=$(node -p "require('./package.json').version" | cut -d'.' -f1,2)
+          NEW_VERSION="${BASE_VERSION}.${{ github.run_number }}"
           echo "New Version: $NEW_VERSION"
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
@@ -98,7 +99,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 24
+          node-version: 20
+          cache: 'npm'
 
       - name: Install Linux Dependencies
         if: matrix.platform == 'linux'
@@ -106,12 +108,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y rpm fakeroot dpkg
 
-      - name: Force npm 10 & Sanitize Package
-        run: |
-          npm install -g npm@10
-          # Remove any potential hidden \r characters and BOM
-          tr -d '\r' < package.json > package.json.tmp && mv package.json.tmp package.json
-          npm install
+      - name: Install Dependencies
+        run: npm install
 
       - name: Set Release Version
         shell: bash
