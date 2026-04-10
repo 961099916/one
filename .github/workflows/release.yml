@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.set-version.outputs.version }}
+      release_id: ${{ steps.create.outputs.release_id }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v5
@@ -36,28 +37,38 @@ jobs:
           echo "New Version: $NEW_VERSION"
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Create GitHub Release
+      - name: Create GitHub Draft Release
+        id: create
         uses: actions/github-script@v8
         with:
           script: |
             const version = '${{ steps.set-version.outputs.version }}';
+            let releaseId;
             try {
-              await github.rest.repos.createRelease({
+              const { data } = await github.rest.repos.createRelease({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 tag_name: `v${version}`,
                 name: `v${version}`,
-                draft: false,
+                draft: true,
                 prerelease: false
               });
-              console.log(`Created release v${version}`);
+              releaseId = data.id;
+              console.log(`Created draft release v${version} (id: ${releaseId})`);
             } catch (e) {
               if (e.status === 422) {
-                console.log(`Release v${version} already exists, skipping`);
+                const { data } = await github.rest.repos.listReleases({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo
+                });
+                const existing = data.find(r => r.tag_name === `v${version}`);
+                releaseId = existing?.id;
+                console.log(`Release v${version} already exists (id: ${releaseId})`);
               } else {
                 throw e;
               }
             }
+            core.setOutput('release_id', releaseId);
 
   # 阶段二：各平台并行构建并上传到已创建的 Release
   build:
@@ -144,3 +155,20 @@ jobs:
         if: always()
         shell: bash
         run: rm -rf release/
+
+  # 阶段三：所有平台构建完成后，将 Draft 发布为正式 Release
+  publish:
+    needs: [create-release, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish Release
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: ${{ needs.create-release.outputs.release_id }},
+              draft: false
+            });
+            console.log('Release published successfully!');
