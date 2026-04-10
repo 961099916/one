@@ -69,6 +69,9 @@ jobs:
           "
           echo "APP_VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
+      - name: Build Frontend & Electron (Vite)
+        run: npx vite build
+
       - name: Build and Publish (macOS arm64)
         if: matrix.platform == 'mac' && matrix.arch == 'arm64'
         run: npx electron-builder --mac --arm64 --publish always
