@@ -9,6 +9,9 @@ on:
       - '**.md'
       - '.gitignore'
 
+permissions:
+  contents: write
+
 jobs:
   release:
     strategy:
