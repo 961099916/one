@@ -3,7 +3,7 @@
  */
 import { autoUpdater } from 'electron-updater'
 import log from 'electron-log'
-import { BrowserWindow } from 'electron'
+import { BrowserWindow, Notification, app } from 'electron'
 import { IpcChannel } from '../../constants'
 
 export class UpdateService {
@@ -31,6 +31,11 @@ export class UpdateService {
     autoUpdater.logger = log
     // 禁止自动下载，由用户手动触发或确认
     autoUpdater.autoDownload = false
+
+    // 强制在开发环境下使用开发更新配置
+    if (!app.isPackaged) {
+      autoUpdater.forceDevUpdateConfig = true
+    }
     
     log.info('[UpdateService] 初始化完成')
   }
@@ -87,6 +92,24 @@ export class UpdateService {
         version: info.version,
         releaseNotes: info.releaseNotes
       })
+
+      // 显示系统通知
+      try {
+        const notification = new Notification({
+          title: 'One AI - 发现新版本',
+          body: `新版本 v${info.version} 已可用，请前往“关于”页面更新。`,
+          silent: false,
+        })
+        notification.on('click', () => {
+          if (this.mainWindow) {
+            if (this.mainWindow.isMinimized()) this.mainWindow.restore()
+            this.mainWindow.focus()
+          }
+        })
+        notification.show()
+      } catch (err) {
+        log.error('[UpdateService] 发送通知失败:', err)
+      }
     })
 
     // 没有可用更新
@@ -101,7 +124,10 @@ export class UpdateService {
     autoUpdater.on('download-progress', (progressObj) => {
       this.sendToRenderer(IpcChannel.UPDATE_STATUS, {
         status: 'downloading',
-        progress: progressObj.percent
+        percent: progressObj.percent,
+        bytesPerSecond: progressObj.bytesPerSecond,
+        transferred: progressObj.transferred,
+        total: progressObj.total
       })
     })
 
@@ -118,7 +144,7 @@ export class UpdateService {
       log.error('[UpdateService] 更新过程中出错:', err)
       this.sendToRenderer(IpcChannel.UPDATE_STATUS, {
         status: 'error',
-        message: err.message
+        error: err.message
       })
     })
   }
