@@ -53,24 +53,20 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Set Release Version with Timestamp
+      - name: Set Release Version
         shell: bash
         run: |
-          # 获取当前时间戳 (YYYYMMDDHHmm)
-          TIMESTAMP=$(date +'%Y%m%d%H%M')
-          # 读取 package.json 中的基础版本号
-          BASE_VERSION=$(node -p "require('./package.json').version")
-          # 拼接新版本号（用 . 分隔，符合 semver 格式）
-          NEW_VERSION="${BASE_VERSION}.${TIMESTAMP}"
+          # 读取 package.json 中的 major.minor 版本
+          BASE_VERSION=$(node -p "require('./package.json').version" | cut -d'.' -f1,2)
+          # 用 GitHub run_number 作为 patch，保证 semver 合法且递增
+          NEW_VERSION="${BASE_VERSION}.${{ github.run_number }}"
           echo "New Version: $NEW_VERSION"
-          # 直接写入 package.json，避免 npm version 格式校验问题
           node -e "
             const fs = require('fs');
             const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
             pkg.version = '$NEW_VERSION';
             fs.writeFileSync('./package.json', JSON.stringify(pkg, null, 2) + '\n');
           "
-          # 注入环境变量供后续步骤使用
           echo "APP_VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Build and Publish (macOS arm64)
