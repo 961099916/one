@@ -6,7 +6,7 @@
   "description": "One AI - 本地 LLM 聊天应用（端侧离线版）",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zhangjiahao/one.git"
+    "url": "git+https://github.com/961099916/one.git"
   },
   "author": "",
   "license": "MIT",
@@ -41,7 +41,7 @@
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.1",
     "vue": "^3.4.21",
-    "vue-router": "^5.0.4",
+    "vue-router": "^4.3.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {

@@ -12,8 +12,25 @@ on:
 jobs:
   release:
     strategy:
+      fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        include:
+          # macOS Apple Silicon (arm64) - macos-latest 默认是 M 系列机器
+          - os: macos-latest
+            arch: arm64
+            platform: mac
+          # macOS Intel (x64) - macos-13 是最后一个 Intel 版本
+          - os: macos-13
+            arch: x64
+            platform: mac
+          # Windows x64
+          - os: windows-latest
+            arch: x64
+            platform: win
+          # Linux x64
+          - os: ubuntu-latest
+            arch: x64
+            platform: linux
 
     runs-on: ${{ matrix.os }}
 
@@ -27,6 +44,12 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+      - name: Install Linux Dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm fakeroot dpkg
+
       - name: Install Dependencies
         run: npm install
 
@@ -37,27 +60,54 @@ jobs:
           TIMESTAMP=$(date +'%Y%m%d%H%M')
           # 读取 package.json 中的基础版本号
           BASE_VERSION=$(node -p "require('./package.json').version")
-          # 拼接新版本号
-          NEW_VERSION="${BASE_VERSION}-${TIMESTAMP}"
+          # 拼接新版本号（用 . 分隔，符合 semver 格式）
+          NEW_VERSION="${BASE_VERSION}.${TIMESTAMP}"
           echo "New Version: $NEW_VERSION"
-          # 更新 package.json (仅在内存/当前运行环境中生效)
-          npm version $NEW_VERSION --no-git-tag-version
-          # 注入环境变量供 electron-builder 使用 (可选)
+          # 直接写入 package.json，避免 npm version 格式校验问题
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
+            pkg.version = '$NEW_VERSION';
+            fs.writeFileSync('./package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+          # 注入环境变量供后续步骤使用
           echo "APP_VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
-      - name: Build and Publish
-        run: npm run build
+      - name: Build and Publish (macOS arm64)
+        if: matrix.platform == 'mac' && matrix.arch == 'arm64'
+        run: npx electron-builder --mac --arm64 --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # 如果有证书，可以在这里配置
           # APPLE_ID: ${{ secrets.APPLE_ID }}
           # APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           # CSC_LINK: ${{ secrets.CSC_LINK }}
           # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+
+      - name: Build and Publish (macOS x64)
+        if: matrix.platform == 'mac' && matrix.arch == 'x64'
+        run: npx electron-builder --mac --x64 --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # APPLE_ID: ${{ secrets.APPLE_ID }}
+          # APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          # CSC_LINK: ${{ secrets.CSC_LINK }}
+          # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+
+      - name: Build and Publish (Windows)
+        if: matrix.platform == 'win'
+        run: npx electron-builder --win --x64 --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
           # WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
 
-      - name: Cleanup release (optional)
+      - name: Build and Publish (Linux)
+        if: matrix.platform == 'linux'
+        run: npx electron-builder --linux --x64 --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup Build Artifacts
         if: always()
         shell: bash
         run: rm -rf release/
