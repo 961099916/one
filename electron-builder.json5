@@ -12,23 +12,27 @@
   ],
   "publish": {
     "provider": "github",
-    "owner": "zhangjiahao",
+    "owner": "961099916",
     "repo": "one"
   },
   "mac": {
     "target": [
-      "dmg",
-      "zip"
+      {
+        "target": "dmg",
+        "arch": ["x64", "arm64"]
+      },
+      {
+        "target": "zip",
+        "arch": ["x64", "arm64"]
+      }
     ],
-    "artifactName": "${productName}-Mac-${version}.${ext}"
+    "artifactName": "${productName}-Mac-${arch}-${version}.${ext}"
   },
   "win": {
     "target": [
       {
         "target": "nsis",
-        "arch": [
-          "x64"
-        ]
+        "arch": ["x64"]
       }
     ],
     "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
@@ -42,7 +46,10 @@
   },
   "linux": {
     "target": [
-      "AppImage"
+      {
+        "target": "AppImage",
+        "arch": ["x64"]
+      }
     ],
     "artifactName": "${productName}-Linux-${version}.${ext}"
   }
