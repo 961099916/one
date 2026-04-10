@@ -142,9 +142,16 @@ export class UpdateService {
     // 错误处理
     autoUpdater.on('error', (err) => {
       log.error('[UpdateService] 更新过程中出错:', err)
+      
+      // 特殊处理 macOS 签名校验失败
+      const isAuthError = err.message.includes('Code signature') || 
+                          err.message.includes('validation') ||
+                          err.message.includes('ShipIt')
+
       this.sendToRenderer(IpcChannel.UPDATE_STATUS, {
         status: 'error',
-        error: err.message
+        error: err.message,
+        isAuthError: isAuthError && process.platform === 'darwin'
       })
     })
   }

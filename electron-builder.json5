@@ -26,7 +26,8 @@
         "arch": ["x64", "arm64"]
       }
     ],
-    "artifactName": "${productName}-Mac-${arch}-${version}.${ext}"
+    "artifactName": "${productName}-Mac-${arch}-${version}.${ext}",
+    "identity": null
   },
   "win": {
     "target": [

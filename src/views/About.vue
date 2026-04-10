@@ -103,6 +103,18 @@
             重启并安装
           </button>
 
+          <!-- 下载链接按钮 (仅在签名校验失败时显示) -->
+          <button
+            v-if="updateStatus === 'error' && appStore.updateInfo.isAuthError"
+            class="btn btn-primary"
+            @click="handleManualDownload"
+          >
+            <n-icon size="14">
+              <download-outline />
+            </n-icon>
+            前往 GitHub 手动下载
+          </button>
+
           <button class="btn btn-ghost" @click="handleOpenLog">
             <n-icon size="14">
               <document-text-outline />
@@ -165,6 +177,10 @@ const envRows = computed(() => {
 const updateStatus = computed(() => appStore.updateStatus)
 
 const updateStatusText = computed(() => {
+  if (updateStatus.value === 'error' && appStore.updateInfo.isAuthError) {
+    return '更新校验失败 (需手动)'
+  }
+
   const map: Record<string, string> = {
     idle: '已是最新',
     checking: '检查中',
@@ -207,6 +223,16 @@ async function handleOpenLog() {
     return
   }
   await window.electronAPI.app.openLogDir()
+}
+
+function handleManualDownload() {
+  const url = 'https://github.com/961099916/one/releases'
+  if (window.electronAPI) {
+    // 假设可以通过 shell 或 window.open 打开
+    window.open(url, '_blank')
+  } else {
+    window.open(url, '_blank')
+  }
 }
 
 function formatSpeed(bps: number): string {

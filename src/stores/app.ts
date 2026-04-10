@@ -23,6 +23,7 @@ export interface UpdateInfo {
   transferred?: number
   total?: number
   error?: string
+  isAuthError?: boolean
 }
 
 const DEFAULT_APP_SETTINGS: AppSettings = {
