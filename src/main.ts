@@ -10,6 +10,33 @@ import { log } from '@/utils/logger'
 import { useAppStore, useChatStore, useSettingsStore } from '@/stores'
 import type { ModelInfo } from '@/types'
 
+// ECharts 按需引入
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart, BarChart } from 'echarts/charts'
+import {
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  DatasetComponent,
+  LegendComponent,
+  DataZoomComponent
+} from 'echarts/components'
+import VChart from 'vue-echarts'
+
+// 注册 ECharts 核心组件
+use([
+  CanvasRenderer,
+  LineChart,
+  BarChart,
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  DatasetComponent,
+  LegendComponent,
+  DataZoomComponent
+])
+
 /**
  * 应用入口
  */
@@ -20,6 +47,7 @@ pinia.use(piniaPluginPersistedstate)
 app.use(pinia)
 app.use(naive)
 app.use(router)
+app.component('VChart', VChart)
 
 app.mount('#app').$nextTick(async () => {
   const appStore = useAppStore()
