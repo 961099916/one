@@ -8,7 +8,7 @@
               <library-outline />
             </n-icon>
           </div>
-          <h1 class="welcome-title">欢迎使用 One AI !!!</h1>
+          <h1 class="welcome-title">欢迎使用 One AI</h1>
           <p class="welcome-desc">本地 LLM 聊天助手，保护您的隐私安全</p>
         </div>
 
