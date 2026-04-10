@@ -1,0 +1,215 @@
+/* ========================================================
+   Element Plus Admin 风格主题系统
+   ======================================================== */
+
+/* ==================== CSS 变量（浅色模式）==================== */
+
+:root {
+  /* --- 品牌色系 (Inspired by Arco Design Blue) --- */
+  --el-color-primary: #165dff;
+  --el-color-primary-light-1: #3c7eff;
+  --el-color-primary-light-2: #629cff;
+  --el-color-primary-light-3: #89b9ff;
+  --el-color-primary-light-4: #b0d5ff;
+  --el-color-primary-light-5: #d6eaff;
+  --el-color-primary-light-6: #e8f3ff;
+  --el-color-primary-light-7: #f0f7ff;
+  --el-color-primary-light-8: #f5faff;
+  --el-color-primary-light-9: #fafcfe;
+  --el-color-primary-dark-1: #0e42d2;
+  --el-color-primary-dark-2: #082eab;
+
+  /* --- 辅助色 --- */
+  --el-color-success: #00b42a;
+  --el-color-warning: #ff7d00;
+  --el-color-danger: #f53f3f;
+  --el-color-error: #f53f3f;
+  --el-color-info: #86909c;
+
+  /* --- 中性色阶 (Grays) --- */
+  --el-text-color-primary: #1d2129;
+  --el-text-color-regular: #4e5969;
+  --el-text-color-secondary: #86909c;
+  --el-text-color-placeholder: #c9cdd4;
+  --el-text-color-disabled: #f2f3f5;
+
+  /* --- 边框与填充 --- */
+  --el-border-color: #e5e6eb;
+  --el-border-color-light: #f2f3f5;
+  --el-border-color-lighter: #f7f8fa;
+  --el-border-color-extra-light: #fafafa;
+  
+  --el-fill-color: #f2f3f5;
+  --el-fill-color-light: #f7f8fa;
+  --el-fill-color-lighter: #fafafa;
+  --el-fill-color-blank: #ffffff;
+
+  /* --- 背景色 --- */
+  --el-bg-color: #ffffff;
+  --el-bg-color-page: #f0f2f5; /* 经典的后台背景灰 */
+  --el-bg-color-overlay: #ffffff;
+
+  /* --- 阴影系统 (Layered Shadows) --- */
+  --el-box-shadow-base: 0 2px 5px 0 rgba(0, 0, 0, 0.08);
+  --el-box-shadow-light: 0 4px 10px 0 rgba(0, 0, 0, 0.1);
+  --el-box-shadow-dark: 0 8px 20px rgba(0, 0, 0, 0.12);
+  --brand-shadow: 0 4px 10px rgba(22, 93, 255, 0.15);
+
+  /* --- 几何规范 --- */
+  --el-border-radius-small: 2px;
+  --el-border-radius-base: 8px; /* 更加圆润 */
+  --el-border-radius-large: 12px;
+  --el-border-radius-round: 24px;
+
+  /* --- 字体栈 (Modern Stack) --- */
+  --el-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  
+  /* --- 间距 (8px Grid) --- */
+  --spacing-unit: 8px;
+}
+
+/* ==================== 深色模式 ==================== */
+
+[data-theme='dark'] {
+  /* --- 主色调保持一致或微调 --- */
+  --el-color-primary: #165dff;
+  --el-color-primary-light-9: #172433; /* 深色背景下的激活项颜色 */
+
+  /* --- 文字色 --- */
+  --el-text-color-primary: #f5f5f5;
+  --el-text-color-regular: #b8b8b8;
+  --el-text-color-secondary: #7e7e7e;
+  --el-text-color-placeholder: #505050;
+  --el-text-color-disabled: #303030;
+
+  /* --- 边框与填充 --- */
+  --el-border-color: #333333;
+  --el-border-color-light: #2a2a2a;
+  --el-border-color-lighter: #222222;
+  
+  --el-fill-color: #2a2a2a;
+  --el-fill-color-light: #222222;
+  --el-fill-color-blank: #1a1a1a;
+
+  /* --- 背景色 --- */
+  --el-bg-color: #232324;
+  --el-bg-color-page: #17171a;
+  --el-bg-color-overlay: #232324;
+
+  /* --- 阴影系统 --- */
+  --el-box-shadow-base: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* ==================== 重置 ==================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: var(--el-font-size-base);
+}
+
+body {
+  font-family: var(--el-font-family);
+  font-size: var(--el-font-size-base);
+  color: var(--el-text-color-primary);
+  background-color: var(--el-bg-color-page);
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.57;
+}
+
+#app {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+/* ==================== 滚动条美化 ==================== */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--el-border-color-dark);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--el-text-color-secondary);
+}
+
+/* ==================== 选中文字颜色 ==================== */
+
+::selection {
+  background: var(--el-color-primary-light-7);
+  color: var(--el-color-primary);
+}
+
+/* ==================== 工具类 ==================== */
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==================== 消息内容样式 ==================== */
+
+.message-content {
+  line-height: 1.7;
+  font-size: var(--el-font-size-base);
+  word-break: break-word;
+}
+
+.message-content p {
+  margin-bottom: 0.75em;
+}
+
+.message-content p:last-child {
+  margin-bottom: 0;
+}
+
+.message-content code {
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  font-size: 0.875em;
+  background: var(--el-fill-color-light);
+  border: 1px solid var(--el-border-color);
+  border-radius: var(--el-border-radius-small);
+  padding: 1px 5px;
+}
+
+.message-content pre {
+  background: var(--el-fill-color-light);
+  border: 1px solid var(--el-border-color);
+  border-radius: var(--el-border-radius-base);
+  padding: var(--el-spacing-md) var(--el-spacing-lg);
+  overflow-x: auto;
+  margin: 0.75em 0;
+}
+
+.message-content pre code {
+  background: none;
+  border: none;
+  padding: 0;
+}

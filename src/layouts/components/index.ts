@@ -1,0 +1,6 @@
+export { default as Sidebar } from './Sidebar.vue'
+export { default as SidebarLogo } from './SidebarLogo.vue'
+export { default as SidebarMenu } from './SidebarMenu.vue'
+export { default as SidebarFooter } from './SidebarFooter.vue'
+export { default as AppHeader } from './AppHeader.vue'
+export { default as AppMain } from './AppMain.vue'

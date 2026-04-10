@@ -1,0 +1,501 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1775754970420,
+  "projectRoot": "/Users/zhangjiahao/IdeaProjects/one/one",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": ">=18.0.0",
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "vue",
+        "version": "3.4.21",
+        "category": "frontend"
+      },
+      {
+        "name": "vite",
+        "version": "5.1.6",
+        "category": "build"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": "Node.js 18.0.0"
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": null,
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "vite",
+      "build": "npm run type-check && vite build && electron-builder",
+      "preview": "vite preview",
+      "type-check": "vue-tsc --noEmit",
+      "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
+      "lint:check": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts",
+      "format": "prettier --write src/ electron/",
+      "format:check": "prettier --check src/ electron/",
+      "check": "npm run type-check && npm run lint:check && npm run format:check"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "docs",
+      "public",
+      "src"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 4,
+      "lastAccessed": 1775754970053,
+      "keyFiles": [
+        "electron-vite.animate.svg",
+        "electron-vite.svg",
+        "index.html",
+        "vite.svg"
+      ]
+    },
+    "dist-electron": {
+      "path": "dist-electron",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1775754970130,
+      "keyFiles": [
+        "main.js",
+        "preload.mjs"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 3,
+      "lastAccessed": 1775754970213,
+      "keyFiles": [
+        "ARCHITECTURE.md",
+        "DEVELOPMENT.md",
+        "PERSISTENCE.md"
+      ]
+    },
+    "electron": {
+      "path": "electron",
+      "purpose": null,
+      "fileCount": 4,
+      "lastAccessed": 1775754970214,
+      "keyFiles": [
+        "electron-env.d.ts",
+        "main.ts",
+        "preload.ts"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 3,
+      "lastAccessed": 1775754970217,
+      "keyFiles": [
+        "electron-vite.animate.svg",
+        "electron-vite.svg",
+        "vite.svg"
+      ]
+    },
+    "release": {
+      "path": "release",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1775754970219,
+      "keyFiles": []
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 5,
+      "lastAccessed": 1775754970220,
+      "keyFiles": [
+        "App.vue",
+        "auto-imports.d.ts",
+        "components.d.ts",
+        "main.ts",
+        "vite-env.d.ts"
+      ]
+    },
+    "dist/assets": {
+      "path": "dist/assets",
+      "purpose": "Static assets",
+      "fileCount": 2,
+      "lastAccessed": 1775754970224,
+      "keyFiles": [
+        "index-BRNpqvxz.css",
+        "index-Co9ozIzn.js"
+      ]
+    },
+    "electron/services": {
+      "path": "electron/services",
+      "purpose": "Business logic services",
+      "fileCount": 0,
+      "lastAccessed": 1775754970253,
+      "keyFiles": []
+    },
+    "electron/types": {
+      "path": "electron/types",
+      "purpose": "Type definitions",
+      "fileCount": 1,
+      "lastAccessed": 1775754970276,
+      "keyFiles": [
+        "index.ts"
+      ]
+    },
+    "src/assets": {
+      "path": "src/assets",
+      "purpose": "Static assets",
+      "fileCount": 3,
+      "lastAccessed": 1775754970284,
+      "keyFiles": [
+        "main.css",
+        "tailwind.css",
+        "vue.svg"
+      ]
+    },
+    "src/components": {
+      "path": "src/components",
+      "purpose": "UI components",
+      "fileCount": 4,
+      "lastAccessed": 1775754970301,
+      "keyFiles": [
+        "ChatInput.vue",
+        "EmptyState.vue",
+        "MessageItem.vue"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src/views/Chat.vue",
+      "accessCount": 24,
+      "lastAccessed": 1775802580880,
+      "type": "file"
+    },
+    {
+      "path": "src/App.vue",
+      "accessCount": 16,
+      "lastAccessed": 1775802087286,
+      "type": "file"
+    },
+    {
+      "path": "src/views/SettingsLayout.vue",
+      "accessCount": 11,
+      "lastAccessed": 1775802752179,
+      "type": "file"
+    },
+    {
+      "path": "src/router/routes.ts",
+      "accessCount": 9,
+      "lastAccessed": 1775802058896,
+      "type": "file"
+    },
+    {
+      "path": "src/views/Home.vue",
+      "accessCount": 7,
+      "lastAccessed": 1775802502912,
+      "type": "file"
+    },
+    {
+      "path": "electron/database/sqlite.ts",
+      "accessCount": 6,
+      "lastAccessed": 1775778499984,
+      "type": "file"
+    },
+    {
+      "path": "src/constants/index.ts",
+      "accessCount": 6,
+      "lastAccessed": 1775797767735,
+      "type": "file"
+    },
+    {
+      "path": "src",
+      "accessCount": 6,
+      "lastAccessed": 1775803302828,
+      "type": "directory"
+    },
+    {
+      "path": "src/router/index.ts",
+      "accessCount": 5,
+      "lastAccessed": 1775797652993,
+      "type": "file"
+    },
+    {
+      "path": "src/layouts/components/SidebarMenu.vue",
+      "accessCount": 5,
+      "lastAccessed": 1775800207731,
+      "type": "file"
+    },
+    {
+      "path": "src/layouts/MainLayout.vue",
+      "accessCount": 5,
+      "lastAccessed": 1775802059282,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 5,
+      "lastAccessed": 1775803387920,
+      "type": "file"
+    },
+    {
+      "path": "electron/services/core/cronService.ts",
+      "accessCount": 4,
+      "lastAccessed": 1775777186066,
+      "type": "file"
+    },
+    {
+      "path": "src/layouts/components/AppHeader.vue",
+      "accessCount": 4,
+      "lastAccessed": 1775800198887,
+      "type": "file"
+    },
+    {
+      "path": "electron/services/integration/tonghuashunService.ts",
+      "accessCount": 4,
+      "lastAccessed": 1775801086064,
+      "type": "file"
+    },
+    {
+      "path": "src/styles/theme.css",
+      "accessCount": 3,
+      "lastAccessed": 1775755617945,
+      "type": "file"
+    },
+    {
+      "path": "electron/services/core/appBootstrap.ts",
+      "accessCount": 3,
+      "lastAccessed": 1775777221833,
+      "type": "file"
+    },
+    {
+      "path": "electron/services/models/modelService.ts",
+      "accessCount": 3,
+      "lastAccessed": 1775778657760,
+      "type": "file"
+    },
+    {
+      "path": "electron/services/integration/xuangubaoService.ts",
+      "accessCount": 3,
+      "lastAccessed": 1775800637835,
+      "type": "file"
+    },
+    {
+      "path": "src/layouts/components/AppMain.vue",
+      "accessCount": 3,
+      "lastAccessed": 1775802428290,
+      "type": "file"
+    },
+    {
+      "path": "electron/services/tasks/register.ts",
+      "accessCount": 3,
+      "lastAccessed": 1775803659438,
+      "type": "file"
+    },
+    {
+      "path": "electron/database/index.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775777726003,
+      "type": "file"
+    },
+    {
+      "path": "electron/services/models/index.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775778665929,
+      "type": "file"
+    },
+    {
+      "path": "src/layouts/components/Sidebar.vue",
+      "accessCount": 2,
+      "lastAccessed": 1775797886995,
+      "type": "file"
+    },
+    {
+      "path": "src/layouts/components/SidebarLogo.vue",
+      "accessCount": 2,
+      "lastAccessed": 1775797894826,
+      "type": "file"
+    },
+    {
+      "path": "electron/services/models/llamaChatService.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775803040848,
+      "type": "file"
+    },
+    {
+      "path": "src/assets/main.css",
+      "accessCount": 1,
+      "lastAccessed": 1775755177183,
+      "type": "file"
+    },
+    {
+      "path": "electron/services/ipc/cronHandlers.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775776881601,
+      "type": "file"
+    },
+    {
+      "path": "electron/services/tasks/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775777105454,
+      "type": "file"
+    },
+    {
+      "path": "electron/services/tasks/cleanupTask.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775777130533,
+      "type": "file"
+    },
+    {
+      "path": "electron/services/tasks/backupTask.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775777131112,
+      "type": "file"
+    },
+    {
+      "path": "electron/services/storage/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775777513097,
+      "type": "file"
+    },
+    {
+      "path": "electron/services/tasks/syncMarketDataTask.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775777983770,
+      "type": "file"
+    },
+    {
+      "path": "electron/database/connection.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775778230822,
+      "type": "file"
+    },
+    {
+      "path": "electron/database/schema.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775778245719,
+      "type": "file"
+    },
+    {
+      "path": "electron/database/types.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775778259358,
+      "type": "file"
+    },
+    {
+      "path": "electron/database/repositories/sessionRepository.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775778285621,
+      "type": "file"
+    },
+    {
+      "path": "electron/database/repositories/messageRepository.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775778302573,
+      "type": "file"
+    },
+    {
+      "path": "electron/database/repositories/marketDataRepository.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775778322070,
+      "type": "file"
+    },
+    {
+      "path": "electron/database/repositories/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775778332674,
+      "type": "file"
+    },
+    {
+      "path": "electron/services/models/modelFileService.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775778527552,
+      "type": "file"
+    },
+    {
+      "path": "electron/services/models/modelDownloadService.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775778557653,
+      "type": "file"
+    },
+    {
+      "path": "electron/services/models/modelIpcHandlers.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775778612618,
+      "type": "file"
+    },
+    {
+      "path": "electron/database/fileStorage.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775778860347,
+      "type": "file"
+    },
+    {
+      "path": "electron/utils/fileUtils.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775778892879,
+      "type": "file"
+    },
+    {
+      "path": "electron/storage/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775778958595,
+      "type": "file"
+    },
+    {
+      "path": "electron/storage/storageService.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775778989408,
+      "type": "file"
+    },
+    {
+      "path": "src/layouts/components/SidebarFooter.vue",
+      "accessCount": 1,
+      "lastAccessed": 1775797497826,
+      "type": "file"
+    },
+    {
+      "path": "src/layouts/components/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775797536182,
+      "type": "file"
+    },
+    {
+      "path": "src/router/menu.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775799923186,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

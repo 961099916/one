@@ -1,0 +1,261 @@
+/* ========================================================
+   One AI — 全局设计系统（飞书/字节风格）
+   ======================================================== */
+
+/* ==================== Google Fonts ==================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ==================== CSS 变量（浅色模式） ==================== */
+
+:root {
+  /* 字体 */
+  --font-family:
+    'PingFang SC', -apple-system, BlinkMacSystemFont, 'Inter', 'Microsoft YaHei', '微软雅黑',
+    sans-serif;
+  --font-size-base: 14px;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+
+  /* 布局 */
+  --sidebar-width: 260px;
+  --titlebar-height: 0px; /* macOS hiddenInset 留白由系统处理 */
+
+  /* 主色系（深蓝，飞书风格） */
+  --primary-color: #1456ff;
+  --primary-hover: #0e46d9;
+  --primary-active: #0937b3;
+  --primary-bg: rgba(20, 86, 255, 0.08);
+  --primary-bg-hover: rgba(20, 86, 255, 0.12);
+
+  /* 危险色 */
+  --danger-color: #f54a45;
+  --danger-hover: #d93e3a;
+  --danger-bg: rgba(245, 74, 69, 0.08);
+
+  /* 成功色 */
+  --success-color: #00b42a;
+  --success-bg: rgba(0, 180, 42, 0.08);
+
+  /* 警告色 */
+  --warning-color: #ff7d00;
+  --warning-bg: rgba(255, 125, 0, 0.08);
+
+  /* 背景色层级 */
+  --bg-app: #f0f1f5;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f8fa;
+  --bg-sidebar: #f2f3f7;
+  --bg-sidebar-hover: #e8eaf0;
+  --bg-sidebar-active: rgba(20, 86, 255, 0.1);
+  --bg-input: #ffffff;
+  --bg-overlay: rgba(0, 0, 0, 0.45);
+
+  /* 文字色 */
+  --text-primary: #1f2329;
+  --text-secondary: #646a73;
+  --text-tertiary: #8f959e;
+  --text-disabled: #bbbfc4;
+  --text-inverse: #ffffff;
+  --text-link: #1456ff;
+
+  /* 边框色 */
+  --border-color: #e0e4ea;
+  --border-color-strong: #c9cdd4;
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.06);
+
+  /* 过渡动效 */
+  --transition-fast: 0.12s ease;
+  --transition-base: 0.2s ease;
+  --transition-slow: 0.3s ease;
+
+  /* 间距 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-base: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+}
+
+/* ==================== 深色模式 ==================== */
+
+[data-theme='dark'] {
+  --bg-app: #0e1117;
+  --bg-primary: #1a1d23;
+  --bg-secondary: #21252e;
+  --bg-sidebar: #161920;
+  --bg-sidebar-hover: #1e222b;
+  --bg-sidebar-active: rgba(20, 86, 255, 0.15);
+  --bg-input: #21252e;
+
+  --text-primary: #e5e8ef;
+  --text-secondary: #8f959e;
+  --text-tertiary: #646a73;
+  --text-disabled: #3d4354;
+  --text-inverse: #ffffff;
+  --text-link: #5684ff;
+
+  --border-color: #2a2f3d;
+  --border-color-strong: #363c4e;
+
+  --primary-color: #4d7cff;
+  --primary-hover: #3d6aee;
+  --primary-active: #2d5add;
+  --primary-bg: rgba(77, 124, 255, 0.12);
+  --primary-bg-hover: rgba(77, 124, 255, 0.18);
+
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.36);
+}
+
+/* ==================== 重置 ==================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: var(--font-size-base);
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.57;
+}
+
+#app {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+/* ==================== 滚动条美化 ==================== */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color-strong);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* ==================== 选中文字颜色 ==================== */
+
+::selection {
+  background: var(--primary-bg-hover);
+  color: var(--primary-color);
+}
+
+/* ==================== 基础布局 ==================== */
+
+.layout-container {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  background-color: var(--bg-app);
+}
+
+/* 主内容区 */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-primary);
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* ==================== 消息内容 ==================== */
+
+.message-content {
+  line-height: 1.7;
+  font-size: var(--font-size-md);
+  word-break: break-word;
+}
+
+.message-content p {
+  margin-bottom: 0.75em;
+}
+
+.message-content p:last-child {
+  margin-bottom: 0;
+}
+
+.message-content code {
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  font-size: 0.875em;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 1px 5px;
+}
+
+.message-content pre {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md) var(--spacing-base);
+  overflow-x: auto;
+  margin: 0.75em 0;
+}
+
+.message-content pre code {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* ==================== 工具类 ==================== */
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==================== Naive UI 主题覆盖 ==================== */
+
+/* 让 Naive UI 颜色与我们的变量系统协调 */
+.n-button--primary-type {
+  --n-color: var(--primary-color) !important;
+  --n-color-hover: var(--primary-hover) !important;
+}
