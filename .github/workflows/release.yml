@@ -22,8 +22,8 @@ jobs:
           - os: macos-latest
             arch: arm64
             platform: mac
-          # macOS Intel (x64) - macos-12 是当前可用的 Intel 版本（macos-13 已下线）
-          - os: macos-12
+          # macOS Intel (x64) - macos-14 是当前可用的 Intel 版本（macos-12/13 均已退役）
+          - os: macos-14
             arch: x64
             platform: mac
           # Windows x64
