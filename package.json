@@ -6,7 +6,7 @@
   "description": "One AI - 本地 LLM 聊天应用（端侧离线版）",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zhangjiahao/one.git"
+    "url": "git+https://github.com/961099916/one.git"
   },
   "author": "",
   "license": "MIT",
@@ -20,7 +20,8 @@
     "lint:check": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts",
     "format": "prettier --write src/ electron/",
     "format:check": "prettier --check src/ electron/",
-    "check": "npm run type-check && npm run lint:check && npm run format:check"
+    "check": "npm run type-check && npm run lint:check && npm run format:check",
+    "rebuild": "electron-rebuild -f -w better-sqlite3"
   },
   "dependencies": {
     "@types/node-cron": "^3.0.11",
@@ -41,10 +42,11 @@
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.1",
     "vue": "^3.4.21",
-    "vue-router": "^5.0.4",
+    "vue-router": "^4.3.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@electron/rebuild": "^4.0.3",
     "@tailwindcss/postcss": "^4.2.2",
     "@types/better-sqlite3": "^7.6.13",
     "@types/highlight.js": "^9.12.4",
