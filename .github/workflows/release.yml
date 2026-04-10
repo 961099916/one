@@ -9,21 +9,68 @@ on:
       - '**.md'
       - '.gitignore'
 
-
 permissions:
   contents: write
 
 jobs:
-  release:
+  # 阶段一：创建 GitHub Release，输出版本号供后续 job 使用
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.set-version.outputs.version }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Set Release Version
+        id: set-version
+        shell: bash
+        run: |
+          BASE_VERSION=$(node -p "require('./package.json').version" | cut -d'.' -f1,2)
+          NEW_VERSION="${BASE_VERSION}.${{ github.run_number }}"
+          echo "New Version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ steps.set-version.outputs.version }}';
+            try {
+              await github.rest.repos.createRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag_name: `v${version}`,
+                name: `v${version}`,
+                draft: false,
+                prerelease: false
+              });
+              console.log(`Created release v${version}`);
+            } catch (e) {
+              if (e.status === 422) {
+                console.log(`Release v${version} already exists, skipping`);
+              } else {
+                throw e;
+              }
+            }
+
+  # 阶段二：各平台并行构建并上传到已创建的 Release
+  build:
+    needs: create-release
     strategy:
       fail-fast: false
       matrix:
         include:
-          # macOS Apple Silicon (arm64) - macos-latest 默认是 M 系列机器
+          # macOS Apple Silicon (arm64)
           - os: macos-latest
             arch: arm64
             platform: mac
-          # macOS Intel (x64) - macos-14 是当前可用的 Intel 版本（macos-12/13 均已退役）
+          # macOS Intel (x64)
           - os: macos-14
             arch: x64
             platform: mac
@@ -60,10 +107,7 @@ jobs:
       - name: Set Release Version
         shell: bash
         run: |
-          # 读取 package.json 中的 major.minor 版本
-          BASE_VERSION=$(node -p "require('./package.json').version" | cut -d'.' -f1,2)
-          # 用 GitHub run_number 作为 patch，保证 semver 合法且递增
-          NEW_VERSION="${BASE_VERSION}.${{ github.run_number }}"
+          NEW_VERSION="${{ needs.create-release.outputs.version }}"
           echo "New Version: $NEW_VERSION"
           node -e "
             const fs = require('fs');
