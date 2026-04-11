@@ -100,12 +100,6 @@ export const menuConfig: MenuItem[] = [
         order: 7,
       },
       {
-        path: 'surge',
-        title: '每日热点分析',
-        icon: TrendingUpOutline,
-        order: 8,
-      },
-      {
         path: 'surge-review',
         title: '热点深度复盘',
         icon: Analytics,

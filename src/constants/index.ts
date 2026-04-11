@@ -152,8 +152,6 @@ export const RoutePath = {
   XUANGUBAO_STRONG_STOCK: '/xuangubao/strong-stock',
   /** 跌停池分析 */
   XUANGUBAO_LIMIT_DOWN: '/xuangubao/limit-down',
-  /** 每日热点分析 */
-  XUANGUBAO_SURGE: '/xuangubao/surge',
   /** 热点深度复盘 */
   XUANGUBAO_SURGE_REVIEW: '/xuangubao/surge-review',
 } as const
@@ -174,7 +172,6 @@ export const RouteName = {
   XUANGUBAO_YESTERDAY_LIMIT_UP: 'XuanguBaoYesterdayLimitUp',
   XUANGUBAO_STRONG_STOCK: 'XuanguBaoStrongStock',
   XUANGUBAO_LIMIT_DOWN: 'XuanguBaoLimitDown',
-  XUANGUBAO_SURGE: 'XuanguBaoSurge',
   XUANGUBAO_SURGE_REVIEW: 'XuanguBaoSurgeReview',
 } as const
 

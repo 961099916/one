@@ -123,14 +123,6 @@ export const baseRoutes: AppRouteRecordRaw[] = [
             },
           },
           {
-            path: 'surge',
-            name: RouteName.XUANGUBAO_SURGE,
-            component: () => import('@/views/MarketSurge.vue'),
-            meta: {
-              title: '每日热点分析',
-            },
-          },
-          {
             path: 'surge-review',
             name: RouteName.XUANGUBAO_SURGE_REVIEW,
             component: () => import('@/views/MarketSurgeReview.vue'),
