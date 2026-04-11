@@ -12,8 +12,8 @@
  */
 import log from 'electron-log'
 import { initConnection, closeConnection } from './connection'
-import { createTables, createIndexes } from './schema'
-import { sessionRepository, messageRepository, marketDataRepository } from './repositories'
+import { initDatabaseSchema } from './schema'
+import { sessionRepository, messageRepository, marketDataRepository, tradingDayRepository } from './repositories'
 
 // 导出类型
 export type { SessionRow, MessageRow, MarketDataRow } from './types'
@@ -25,6 +25,7 @@ export { getDBInstance } from './connection'
 export const sessionOps = sessionRepository
 export const messageOps = messageRepository
 export const marketDataOps = marketDataRepository
+export const tradingDayOps = tradingDayRepository
 
 /**
  * 初始化数据库
@@ -33,8 +34,7 @@ export const marketDataOps = marketDataRepository
 export function initDB(): void {
   try {
     initConnection()
-    createTables()
-    createIndexes()
+    initDatabaseSchema()
     log.info('[SQLite] 数据库初始化成功')
   } catch (err) {
     log.error('[SQLite] 数据库初始化失败:', err)

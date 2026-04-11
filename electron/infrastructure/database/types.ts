@@ -20,9 +20,14 @@ export interface MessageRow {
 export interface MarketDataRow {
   id: number
   date: string
+  timestamp: number
   rise_count: number
   fall_count: number
   created_at: number
 }
 
+export interface TradingDayRow {
+  date: string
+  is_trading: number // 1: 交易日, 0: 休市
+  updated_at: number
 }

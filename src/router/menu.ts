@@ -43,12 +43,33 @@ export const menuConfig: MenuItem[] = [
     title: '市场数据',
     icon: BarChartOutline,
     order: 3,
+    hidden: true // 迁移至选股通管理下，隐藏旧入口
+  },
+  {
+    path: RoutePath.XUANGUBAO,
+    title: '选股通管理',
+    icon: OptionsOutline, // 使用 OptionsOutline 作为父级图标
+    order: 4,
+    children: [
+      {
+        path: 'indicator',
+        title: '涨跌数据管理',
+        icon: BarChartOutline,
+        order: 1,
+      },
+      {
+        path: 'calendar',
+        title: '交易日历管理',
+        icon: InformationCircleOutline,
+        order: 2,
+      }
+    ]
   },
   {
     path: RoutePath.SETTINGS,
     title: '设置',
     icon: SettingsOutline,
-    order: 4,
+    order: 5,
     children: [
       {
         path: 'model',

@@ -5,7 +5,7 @@
  * 渲染进程通过 window.electronAPI.db.* 和 window.electronAPI.config.* 调用
  */
 import { ipcMain } from 'electron'
-import { sessionOps, messageOps, marketDataOps } from '../../infrastructure/database'
+import { sessionOps, messageOps, marketDataOps, tradingDayOps } from '../../infrastructure/database'
 import { appConfigOps } from '../../infrastructure/store'
 import { IpcChannel } from '../../constants'
 import { XuanguBaoService } from '../../services/integration/xuangubaoService'
@@ -120,32 +120,113 @@ export function initDbHandlers(): void {
 
   // ==================== 市场数据操作（SQLite） ====================
 
-  /** 获取所有市场数据 */
-  ipcMain.handle(IpcChannel.DB_GET_MARKET_DATA, () => {
-    log.info('[IPC] 调用 DB_GET_MARKET_DATA')
+  /** 获取指定范围的市场分时数据（用于折线图） */
+  ipcMain.handle(IpcChannel.DB_GET_MARKET_DATA, (_event, payload) => {
+    const { startDate, endDate } = payload || {}
     try {
-      return marketDataOps.getAll()
+      if (!startDate || !endDate) {
+        log.info('[IPC] 调用 DB_GET_MARKET_DATA, 获取全部数据')
+        return marketDataOps.getAll()
+      }
+      log.info('[IPC] 调用 DB_GET_MARKET_DATA, 范围:', startDate, '至', endDate)
+      return marketDataOps.getByDateRange(startDate, endDate)
     } catch (err) {
       log.error('[DB IPC] get-market-data 失败:', err)
       throw err
     }
   })
 
-  /** 手动同步今日市场数据 */
-  ipcMain.handle(IpcChannel.DB_SYNC_MARKET_DATA, async () => {
-    log.info('[IPC] 调用 DB_SYNC_MARKET_DATA')
+  /** 同步指定日期的市场数据（支持范围及强制同步） */
+  ipcMain.handle(IpcChannel.DB_SYNC_MARKET_DATA, async (_event, payload) => {
+    const { startDate, endDate, force = false } = payload || {}
+    log.info('[IPC] 调用 DB_SYNC_MARKET_DATA, 范围:', startDate, '至', endDate, 'force:', force)
+    const results = { success: true, count: 0, messages: [] as string[] }
+    
+    if (!startDate || !endDate) return { success: false, message: '日期参数缺失' }
+    
     try {
       const xuanguBao = XuanguBaoService.getInstance()
-      const today = new Date().toISOString().split('T')[0]
-      const data = await xuanguBao.getMarketIndicator(today)
-
-      if (data) {
-        marketDataOps.save(today, data.rise_count, data.fall_count)
-        return { success: true }
+      
+      // 生成日期列表
+      const start = new Date(startDate)
+      const end = new Date(endDate)
+      const dateList: string[] = []
+      
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const y = d.getFullYear()
+        const m = String(d.getMonth() + 1).padStart(2, '0')
+        const dateStr = String(d.getDate()).padStart(2, '0')
+        dateList.push(`${y}-${m}-${dateStr}`)
       }
-      return { success: false, message: '未能从选股通获取数据' }
+
+      for (const date of dateList) {
+        // 1. 拦截逻辑
+        if (!force && tradingDayOps.isNonTrading(date)) {
+          log.info(`[Sync] 日期 ${date} 已知休市，跳过`)
+          continue
+        }
+
+        // 2. 发起请求
+        const data = await xuanguBao.getMarketIndicator(date)
+
+        // 3. 严格校验：判断返回数据的实际日期与查询日期是否匹配
+        let isRealTradingDay = false
+        let validData: any[] = []
+        
+        if (data && data.length > 0) {
+          // 将第一个点的时间戳转换为本地 YYYY-MM-DD 字符串进行比对
+          const firstPointDate = new Date(data[0].timestamp * 1000).toLocaleDateString('sv')
+          if (firstPointDate === date) {
+            isRealTradingDay = true
+            validData = data
+          } else {
+            log.info(`[Sync] 日期 ${date} 的 API 返回数据所属日期为 ${firstPointDate}，判定 ${date} 为休市`)
+          }
+        }
+
+        // 4. 处理结果
+        if (isRealTradingDay) {
+          marketDataOps.saveBatch(date, validData)
+          tradingDayOps.saveStatus(date, true)
+          results.count += validData.length
+        } else {
+          // 仅对历史日期进行“休市”标记；今日若无匹配数据则跳过，不标记以允许后续开盘后重试
+          const todayStr = new Date().toLocaleDateString('sv')
+          if (date < todayStr) {
+            tradingDayOps.saveStatus(date, false)
+            log.info(`[Sync] 历史日期 ${date} 已确认为休市并缓存状态`)
+          } else {
+            log.info(`[Sync] 目标日期 ${date} 尚无匹配的分时数据，跳过`)
+          }
+        }
+      }
+
+      return results
     } catch (err) {
       log.error('[DB IPC] sync-market-data 失败:', err)
+      throw err
+    }
+  })
+
+  /** 获取所有交易日记录（用于日历管理） */
+  ipcMain.handle(IpcChannel.DB_GET_ALL_TRADING_DAYS, () => {
+    log.info('[IPC] 调用 DB_GET_ALL_TRADING_DAYS')
+    try {
+      return tradingDayOps.getAll()
+    } catch (err) {
+      log.error('[DB IPC] get-all-trading-days 失败:', err)
+      throw err
+    }
+  })
+
+  /** 手动更新特定日期的交易状态 */
+  ipcMain.handle(IpcChannel.DB_UPDATE_TRADING_DAY, (_event, { date, isTrading }) => {
+    log.info(`[IPC] 调用 DB_UPDATE_TRADING_DAY, 日期: ${date}, 状态: ${isTrading}`)
+    try {
+      tradingDayOps.saveStatus(date, isTrading)
+      return { success: true }
+    } catch (err) {
+      log.error('[DB IPC] update-trading-day 失败:', err)
       throw err
     }
   })

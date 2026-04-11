@@ -1,0 +1,248 @@
+<template>
+  <div class="trading-calendar-container">
+    <n-card :bordered="false" class="main-card">
+      <template #header>
+        <div class="header-content">
+          <n-icon size="20" :component="CalendarOutline" />
+          <span class="header-title">A股交易日历管理</span>
+        </div>
+      </template>
+
+      <template #header-extra>
+        <n-space>
+          <n-button type="primary" size="small" ghost @click="fetchData">
+            <template #icon><n-icon :component="RefreshOutline" /></template>
+            刷新数据
+          </n-button>
+          <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-icon :component="InformationCircleOutline" size="18" style="cursor: help" color="#94a3b8" />
+            </template>
+            点击日期即可切换该日是否为 A 股交易日。标记为“休市”的日期将自动跳过数据同步。
+          </n-tooltip>
+        </n-space>
+      </template>
+
+      <div class="calendar-wrapper">
+        <n-calendar
+          v-model:value="currentDate"
+          #default="{ year, month, date }"
+          @update:value="handleDateClick"
+        >
+          <div class="date-cell">
+            <div 
+              class="status-indicator" 
+              :class="getDateStatusClass(year, month, date)"
+            >
+              <template v-if="getIsTrading(year, month, date)">
+                <n-tag size="tiny" type="success" :bordered="false">交易</n-tag>
+              </template>
+              <template v-else-if="isKnownDay(year, month, date)">
+                <n-tag size="tiny" type="error" :bordered="false">休市</n-tag>
+              </template>
+            </div>
+          </div>
+        </n-calendar>
+      </div>
+    </n-card>
+
+    <!-- 说明区域 -->
+    <div class="status-legend">
+      <div class="legend-item">
+        <span class="dot trading"></span>
+        <span>交易日 (开市)</span>
+      </div>
+      <div class="legend-item">
+        <span class="dot non-trading"></span>
+        <span>非交易日 (休市)</span>
+      </div>
+      <div class="legend-item">
+        <span class="dot unknown"></span>
+        <span>未同步/未知</span>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import {
+  NCard,
+  NCalendar,
+  NTag,
+  NIcon,
+  NButton,
+  NSpace,
+  NTooltip,
+  useMessage
+} from 'naive-ui'
+import {
+  CalendarOutline,
+  RefreshOutline,
+  InformationCircleOutline
+} from '@vicons/ionicons5'
+
+interface TradingDay {
+  date: string
+  is_trading: number
+  updated_at: number
+}
+
+const currentDate = ref(Date.now())
+const tradingDaysMap = ref<Map<string, boolean>>(new Map())
+const message = useMessage()
+
+// 格式化日期 key
+const formatDateKey = (year: number, month: number, date: number): string => {
+  const m = String(month).padStart(2, '0')
+  const d = String(date).padStart(2, '0')
+  return `${year}-${m}-${d}`
+}
+
+// 获取状态
+const isKnownDay = (year: number, month: number, date: number): boolean => {
+  return tradingDaysMap.value.has(formatDateKey(year, month, date))
+}
+
+const getIsTrading = (year: number, month: number, date: number): boolean => {
+  return tradingDaysMap.value.get(formatDateKey(year, month, date)) === true
+}
+
+const getDateStatusClass = (year: number, month: number, date: number): string => {
+  const key = formatDateKey(year, month, date)
+  if (!tradingDaysMap.value.has(key)) return 'status-unknown'
+  return tradingDaysMap.value.get(key) ? 'status-trading' : 'status-non-trading'
+}
+
+// 获取数据
+const fetchData = async () => {
+  try {
+    const api = (window as any).electronAPI
+    if (api?.db?.getAllTradingDays) {
+      const data: TradingDay[] = await api.db.getAllTradingDays()
+      const newMap = new Map<string, boolean>()
+      data.forEach(item => {
+        newMap.set(item.date, item.is_trading === 1)
+      })
+      tradingDaysMap.value = newMap
+    }
+  } catch (err) {
+    console.error('Fetch trading days failed:', err)
+    message.error('加载交易日历数据失败')
+  }
+}
+
+// 处理点击
+const handleDateClick = async (ts: number) => {
+  const dateObj = new Date(ts)
+  const year = dateObj.getFullYear()
+  const month = dateObj.getMonth() + 1
+  const date = dateObj.getDate()
+  const key = formatDateKey(year, month, date)
+  
+  // 切换状态
+  const currentStatus = tradingDaysMap.value.get(key)
+  const nextStatus = currentStatus === undefined ? true : !currentStatus
+  
+  try {
+    const api = (window as any).electronAPI
+    if (api?.db?.updateTradingDay) {
+      await api.db.updateTradingDay({ date: key, isTrading: nextStatus })
+      tradingDaysMap.value.set(key, nextStatus)
+      message.success(`${key} 已标记为 ${nextStatus ? '交易日' : '休市'}`)
+    }
+  } catch (err) {
+    console.error('Update status failed:', err)
+    message.error('更新交易状态失败')
+  }
+}
+
+onMounted(() => {
+  fetchData()
+})
+</script>
+
+<style scoped>
+.trading-calendar-container {
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.main-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.calendar-wrapper {
+  margin-top: 8px;
+}
+
+/* 单元格样式 */
+.date-cell {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 4px;
+}
+
+.status-indicator {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 2px;
+}
+
+/* 状态图例 */
+.status-legend {
+  display: flex;
+  gap: 24px;
+  padding: 12px 24px;
+  background: var(--n-card-color);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dot.trading { background: #18a058; }
+.dot.non-trading { background: #d03050; }
+.dot.unknown { background: #e2e8f0; border: 1px solid #cbd5e1; }
+
+:deep(.n-calendar-cell) {
+  min-height: 80px;
+}
+
+:deep(.n-calendar-cell--current) {
+  background-color: var(--n-button-color-hover) !important;
+}
+
+/* 针对不同状态的单元格背景微调(可选) */
+:deep(.n-calendar-cell:hover) {
+  cursor: pointer;
+}
+</style>

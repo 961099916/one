@@ -43,8 +43,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     updateLastMessage: (sessionId: string, content: string) =>
       ipcRenderer.invoke('db:update-last-message', sessionId, content),
     clearMessages: (sessionId: string) => ipcRenderer.invoke('db:clear-messages', sessionId),
-    getMarketData: () => ipcRenderer.invoke('db:get-market-data'),
-    syncMarketData: () => ipcRenderer.invoke('db:sync-market-data'),
+    getMarketData: (params: unknown) => ipcRenderer.invoke('db:get-market-data', params),
+    syncMarketData: (params: unknown) => ipcRenderer.invoke('db:sync-market-data', params),
+    getAllTradingDays: () => ipcRenderer.invoke('db:get-all-trading-days'),
+    updateTradingDay: (params: { date: string, isTrading: boolean }) => 
+      ipcRenderer.invoke('db:update-trading-day', params),
   },
 
   // ---------- 配置操作（electron-store via 主进程） ----------

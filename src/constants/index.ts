@@ -136,6 +136,12 @@ export const RoutePath = {
   ABOUT: '/settings/about',
   /** 市场数据 */
   MARKET_DATA: '/market',
+  /** 选股通管理 */
+  XUANGUBAO: '/xuangubao',
+  /** 涨跌数据管理 */
+  XUANGUBAO_INDICATOR: '/xuangubao/indicator',
+  /** 交易日历管理 */
+  XUANGUBAO_CALENDAR: '/xuangubao/calendar',
 } as const
 
 /** 路由名称常量 */
@@ -147,6 +153,8 @@ export const RouteName = {
   SETTINGS_APP: 'AppSettings',
   ABOUT: 'About',
   MARKET_DATA: 'MarketData',
+  XUANGUBAO: 'XuanguBao',
+  XUANGUBAO_INDICATOR: 'XuanguBaoIndicator',
 } as const
 
 // ==================== 菜单配置 ====================

@@ -135,6 +135,8 @@ export const IpcChannel = {
   DB_CLEAR_MESSAGES: 'db:clear-messages',
   DB_GET_MARKET_DATA: 'db:get-market-data',
   DB_SYNC_MARKET_DATA: 'db:sync-market-data',
+  DB_GET_ALL_TRADING_DAYS: 'db:get-all-trading-days',
+  DB_UPDATE_TRADING_DAY: 'db:update-trading-day',
 
   // 配置（electron-store）
   CONFIG_GET: 'config:get',

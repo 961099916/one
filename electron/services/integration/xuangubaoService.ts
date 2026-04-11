@@ -7,6 +7,7 @@ import { XuanguBaoConfig, HttpHeaders, HttpMethods, LogTags } from '../../consta
 export interface MarketIndicatorData {
   rise_count: number
   fall_count: number
+  timestamp: number
 }
 
 export interface XuanguBaoResponse<T> {
@@ -25,12 +26,12 @@ export class XuanguBaoService {
   }
 
   /**
-   * 获取市场涨跌数据
+   * 获取市场分时涨跌数据
    * @param date 日期，格式：YYYY-MM-DD
    */
-  async getMarketIndicator(date: string): Promise<MarketIndicatorData | null> {
+  async getMarketIndicator(date: string): Promise<MarketIndicatorData[]> {
     try {
-      log.info(`${LogTags.XUANGUBAO} 获取市场数据，日期:`, date)
+      log.info(`${LogTags.XUANGUBAO} 获取分时数据，日期:`, date)
 
       const url = `${XuanguBaoConfig.API_BASE}${XuanguBaoConfig.ENDPOINTS.MARKET_INDICATOR}?fields=${XuanguBaoConfig.FIELDS.RISE_FALL_COUNT}&date=${date}`
       const response = await fetch(url, {
@@ -45,13 +46,18 @@ export class XuanguBaoService {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
 
-      const result = (await response.json()) as XuanguBaoResponse<MarketIndicatorData>
-      log.info(`${LogTags.XUANGUBAO} 市场数据获取成功:`, result.data)
+      const result = (await response.json()) as XuanguBaoResponse<MarketIndicatorData[]>
+      
+      if (!result.data || !Array.isArray(result.data)) {
+        log.warn(`${LogTags.XUANGUBAO} 接口未返回有效的 data 数组`)
+        return []
+      }
 
+      log.info(`${LogTags.XUANGUBAO} 分时数据获取成功，记录数:`, result.data.length)
       return result.data
     } catch (err) {
-      log.error(`${LogTags.XUANGUBAO} 获取市场数据失败:`, err)
-      return null
+      log.error(`${LogTags.XUANGUBAO} 获取分时数据失败:`, err)
+      return []
     }
   }
 

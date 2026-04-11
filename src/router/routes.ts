@@ -59,6 +59,32 @@ export const baseRoutes: AppRouteRecordRaw[] = [
         },
       },
       {
+        path: RoutePath.XUANGUBAO,
+        name: RouteName.XUANGUBAO,
+        redirect: RoutePath.XUANGUBAO_INDICATOR,
+        meta: {
+          title: '选股通管理',
+        },
+        children: [
+          {
+            path: 'indicator',
+            name: RouteName.XUANGUBAO_INDICATOR,
+            component: () => import('@/views/MarketData.vue'),
+            meta: {
+              title: '涨跌数据管理',
+            },
+          },
+          {
+            path: 'calendar',
+            name: 'XuanguBaoCalendar',
+            component: () => import('@/views/TradingCalendar.vue'),
+            meta: {
+              title: '交易日历管理',
+            },
+          }
+        ]
+      },
+      {
         path: RoutePath.SETTINGS,
         name: RouteName.SETTINGS,
         component: SettingsLayout,

@@ -1,5 +1,5 @@
 <template>
-  <n-config-provider>
+  <n-config-provider :locale="zhCN" :date-locale="dateZhCN">
     <n-message-provider>
       <n-dialog-provider>
         <n-notification-provider>
@@ -20,7 +20,9 @@ import {
   NMessageProvider,
   NDialogProvider,
   NNotificationProvider,
-  NLoadingBarProvider
+  NLoadingBarProvider,
+  zhCN,
+  dateZhCN
 } from 'naive-ui'
 </script>
 

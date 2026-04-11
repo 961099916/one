@@ -11,48 +11,47 @@ import type { MarketDataRow } from '../types'
  */
 export const marketDataRepository = {
   /**
-   * 获取所有市场数据（按日期倒序）
+   * 根据日期范围获取市场数据（按时间戳升序，用于折线图）
+   */
+  getByDateRange(startDate: string, endDate: string): MarketDataRow[] {
+    const db = getDB()
+    const stmt = db.prepare(`
+      SELECT * FROM market_data 
+      WHERE date >= ? AND date <= ? 
+      ORDER BY timestamp ASC
+    `)
+    return stmt.all(startDate, endDate) as MarketDataRow[]
+  },
+
+  /**
+   * 获取所有市场分时数据（按时间戳升序）
    */
   getAll(): MarketDataRow[] {
     const db = getDB()
-    const stmt = db.prepare('SELECT * FROM market_data ORDER BY date DESC')
+    const stmt = db.prepare('SELECT * FROM market_data ORDER BY timestamp ASC')
     return stmt.all() as MarketDataRow[]
   },
 
   /**
-   * 根据日期获取市场数据
+   * 批量保存全量分时数据
    */
-  getByDate(date: string): MarketDataRow | undefined {
-    const db = getDB()
-    const stmt = db.prepare('SELECT * FROM market_data WHERE date = ?')
-    const result = stmt.get(date)
-    return result as MarketDataRow | undefined
-  },
-
-  /**
-   * 保存市场数据（如果存在则更新）
-   */
-  save(date: string, riseCount: number, fallCount: number): void {
+  saveBatch(date: string, points: { timestamp: number, rise_count: number, fall_count: number }[]): void {
     const db = getDB()
     const now = Date.now()
 
-    const existing = this.getByDate(date)
-    if (existing) {
-      const stmt = db.prepare(`
-        UPDATE market_data
-        SET rise_count = ?, fall_count = ?, created_at = ?
-        WHERE date = ?
-      `)
-      stmt.run(riseCount, fallCount, now, date)
-      log.debug('[MarketDataRepository] 市场数据更新成功:', date)
-    } else {
-      const stmt = db.prepare(`
-        INSERT INTO market_data (date, rise_count, fall_count, created_at)
-        VALUES (?, ?, ?, ?)
-      `)
-      stmt.run(date, riseCount, fallCount, now)
-      log.debug('[MarketDataRepository] 市场数据创建成功:', date)
-    }
+    const insert = db.prepare(`
+      INSERT OR IGNORE INTO market_data (date, timestamp, rise_count, fall_count, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `)
+
+    const transaction = db.transaction((records) => {
+      for (const record of records) {
+        insert.run(date, record.timestamp, record.rise_count, record.fall_count, now)
+      }
+    })
+
+    transaction(points)
+    log.debug(`[MarketDataRepository] 已完成批量同步: ${date}, 记录数: ${points.length}`)
   },
 
   /**
