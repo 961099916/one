@@ -51,5 +51,19 @@ export const tradingDayRepository = {
     const db = getDB()
     const stmt = db.prepare('SELECT * FROM trading_days ORDER BY date ASC')
     return stmt.all() as TradingDayRow[]
+  },
+
+  /**
+   * 获取最近 N 个交易日 (用于情绪周期表)
+   */
+  getLatestTradingDays(limit: number): TradingDayRow[] {
+    const db = getDB()
+    const stmt = db.prepare(`
+      SELECT * FROM trading_days 
+      WHERE is_trading = 1 
+      ORDER BY date DESC 
+      LIMIT ?
+    `)
+    return stmt.all(limit) as TradingDayRow[]
   }
 }

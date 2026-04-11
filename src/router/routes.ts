@@ -129,6 +129,14 @@ export const baseRoutes: AppRouteRecordRaw[] = [
             meta: {
               title: '热点深度复盘',
             },
+          },
+          {
+            path: 'sentiment-cycle',
+            name: 'SentimentCycle',
+            component: () => import('@/views/SentimentCycle.vue'),
+            meta: {
+              title: '情绪周期表',
+            },
           }
         ]
       },

@@ -86,5 +86,21 @@ export const stockPoolRepository = {
     const stmt = db.prepare('DELETE FROM stock_pool_data WHERE pool_name = ? AND date = ?')
     stmt.run(poolName, date)
     log.info(`[StockPoolRepository] 记录已删除: ${poolName}, 日期: ${date}`)
+  },
+
+  /**
+   * 获取多个日期的池子数据 (用于情绪周期表)
+   */
+  getLatestPoolRecordsByDates(poolName: string, dates: string[]): StockPoolRow[] {
+    if (dates.length === 0) return []
+    const db = getDB()
+    // SQLite 不支持直接绑定数组，需要构建占位符
+    const placeholders = dates.map(() => '?').join(',')
+    const stmt = db.prepare(`
+      SELECT * FROM stock_pool_data 
+      WHERE pool_name = ? AND date IN (${placeholders})
+      ORDER BY date DESC, board_count DESC, last_limit_up_time ASC
+    `)
+    return stmt.all(poolName, ...dates) as StockPoolRow[]
   }
 }

@@ -34,8 +34,30 @@ export interface ElectronDbAPI {
   }>
   updateLastMessage: (sessionId: string, content: string) => Promise<{ success: boolean }>
   clearMessages: (sessionId: string) => Promise<{ success: boolean }>
-  getMarketData: () => Promise<any[]>
-  syncMarketData: () => Promise<{ success: boolean; message?: string }>
+  
+  // 市场数据与情绪指标
+  getMarketData: (payload?: { startDate: string, endDate: string }) => Promise<any[]>
+  syncMarketData: (payload?: { startDate: string, endDate: string, force?: boolean }) => Promise<{ success: boolean; count?: number }>
+  getAllTradingDays: () => Promise<any[]>
+  updateTradingDay: (params: { date: string, isTrading: boolean }) => Promise<{ success: boolean }>
+  
+  // 股票池与聚合
+  getStockPool: (params: { poolName: string, date: string }) => Promise<any[]>
+  syncStockPool: (params: { poolName: string, date: string }) => Promise<{ success: boolean }>
+  batchSyncXuanguBao: (payload: { startDate: string, endDate: string, force?: boolean }) => Promise<any>
+  getSentimentCycle: (params?: { limit?: number }) => Promise<{
+    days: string[]
+    stats: any[]
+    poolRecords: any[]
+  }>
+
+  // 每日热点专题 (Surge)
+  getSurgePlates: (params: { date: string, timestamp?: number }) => Promise<any[]>
+  getSurgeStocks: (params: { date: string, timestamp?: number }) => Promise<any[]>
+  getSurgeTimestamps: (date: string) => Promise<number[]>
+  getSurgeHistoricalDates: () => Promise<string[]>
+  syncSurgeData: (date: string) => Promise<{ success: boolean }>
+  getLatestSurgeTimestamp: (date: string) => Promise<number | null>
 }
 
 export interface ElectronAPI {

@@ -271,6 +271,39 @@ export function initDbHandlers(): void {
     }
   })
 
+  // ==================== 情绪周期聚合操作 ====================
+  
+  /** 获取全量情绪周期数据 */
+  ipcMain.handle(IpcChannel.DB_GET_SENTIMENT_CYCLE, async (_event, params: { limit?: number } = {}) => {
+    const { limit = 15 } = params
+    log.info(`[IPC] 调用 DB_GET_SENTIMENT_CYCLE, limit: ${limit}`)
+    
+    try {
+      // 1. 获取最近的交易日列表
+      const days = tradingDayOps.getLatestTradingDays(limit)
+      if (days.length === 0) return { days: [], matrix: [], stats: [] }
+      
+      const dateList = days.map(d => d.date)
+      const startDate = dateList[dateList.length - 1]
+      const endDate = dateList[0]
+
+      // 2. 获取这些日期的市场指标
+      const stats = marketDataOps.getByDateRange(startDate, endDate)
+      
+      // 3. 获取这些日期的涨停简况
+      const poolRecords = stockPoolOps.getLatestPoolRecordsByDates('limit_up', dateList)
+      
+      return {
+        days: dateList,
+        stats,
+        poolRecords
+      }
+    } catch (err) {
+      log.error('[DB IPC] get-sentiment-cycle 失败:', err)
+      throw err
+    }
+  })
+
   // ==================== 每日热点专题数据（追涨热力板） ====================
 
   /** 获取指定日期的热点板块 */

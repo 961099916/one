@@ -16,6 +16,7 @@ import {
   FlashOutline,
   TrendingDownOutline,
   TrendingUpOutline,
+  HeartOutline,
 } from '@vicons/ionicons5'
 import { RoutePath } from '@/constants'
 
@@ -104,6 +105,12 @@ export const menuConfig: MenuItem[] = [
         title: '热点深度复盘',
         icon: Analytics,
         order: 9,
+      },
+      {
+        path: 'sentiment-cycle',
+        title: '情绪周期表',
+        icon: HeartOutline,
+        order: 10,
       }
     ]
   },
