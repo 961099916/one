@@ -121,6 +121,14 @@ export const baseRoutes: AppRouteRecordRaw[] = [
             meta: {
               title: '跌停池分析',
             },
+          },
+          {
+            path: 'surge',
+            name: RouteName.XUANGUBAO_SURGE,
+            component: () => import('@/views/MarketSurge.vue'),
+            meta: {
+              title: '每日热点分析',
+            },
           }
         ]
       },

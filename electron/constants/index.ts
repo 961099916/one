@@ -28,6 +28,10 @@ export const XuanguBaoConfig = {
     MARKET_INDICATOR: '/market_indicator/line',
     /** 股票池详情（涨停池、炸板池等） */
     STOCK_POOL: '/pool/detail',
+    /** 追涨热力板 - 板块 */
+    SURGE_PLATES: '/surge_stock/plates',
+    /** 追涨热力板 - 个股详情 */
+    SURGE_STOCKS: '/surge_stock/stocks',
   },
   /** API 字段 */
   FIELDS: {
@@ -147,6 +151,11 @@ export const IpcChannel = {
   DB_UPDATE_TRADING_DAY: 'db:update-trading-day',
   DB_GET_STOCK_POOL: 'db:get-stock-pool',
   DB_SYNC_STOCK_POOL: 'db:sync-stock-pool',
+  DB_BATCH_SYNC_XUANGUBAO: 'db:batch-sync-xuangubao',
+  DB_GET_SURGE_PLATES: 'db:get-surge-plates',
+  DB_GET_SURGE_STOCKS: 'db:get-surge-stocks',
+  DB_SYNC_SURGE_DATA: 'db:sync-surge-data',
+  DB_GET_LATEST_SURGE_TIMESTAMP: 'db:get-latest-surge-timestamp',
 
   // 配置（electron-store）
   CONFIG_GET: 'config:get',

@@ -57,3 +57,29 @@ export interface StockPoolRow {
   raw_data?: string
   created_at: number
 }
+
+export interface SurgePlateRow {
+  id?: number
+  date: string
+  timestamp: number
+  plate_id: number
+  name: string
+  description?: string
+  created_at: number
+}
+
+export interface SurgeStockRow {
+  id?: number
+  date: string
+  timestamp: number
+  symbol: string
+  stock_name: string
+  price?: number
+  change_percent?: number
+  description?: string
+  plate_ids?: string // JSON string
+  is_limit_up: number
+  enter_time?: number
+  raw_data?: string
+  created_at: number
+}

@@ -13,10 +13,10 @@
 import log from 'electron-log'
 import { initConnection, closeConnection } from './connection'
 import { initDatabaseSchema } from './schema'
-import { sessionRepository, messageRepository, marketDataRepository, tradingDayRepository, stockPoolRepository } from './repositories'
+import { sessionRepository, messageRepository, marketDataRepository, tradingDayRepository, stockPoolRepository, surgeRepository } from './repositories'
 
 // 导出类型
-export type { SessionRow, MessageRow, MarketDataRow, StockPoolRow } from './types'
+export type { SessionRow, MessageRow, MarketDataRow, StockPoolRow, SurgePlateRow, SurgeStockRow } from './types'
 
 // 导出连接管理
 export { getDBInstance } from './connection'
@@ -27,6 +27,7 @@ export const messageOps = messageRepository
 export const marketDataOps = marketDataRepository
 export const tradingDayOps = tradingDayRepository
 export const stockPoolOps = stockPoolRepository
+export const surgeOps = surgeRepository
 
 /**
  * 初始化数据库

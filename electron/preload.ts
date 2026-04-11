@@ -52,6 +52,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('db:get-stock-pool', params),
     syncStockPool: (params: { poolName: string, date: string }) => 
       ipcRenderer.invoke('db:sync-stock-pool', params),
+    batchSyncXuanguBao: (params: { startDate: string, endDate: string, force?: boolean }) =>
+      ipcRenderer.invoke('db:batch-sync-xuangubao', params),
+    getSurgePlates: (date: string) => ipcRenderer.invoke('db:get-surge-plates', date),
+    getSurgeStocks: (date: string) => ipcRenderer.invoke('db:get-surge-stocks', date),
+    syncSurgeData: (date: string) => ipcRenderer.invoke('db:sync-surge-data', date),
+    getLatestSurgeTimestamp: (date: string) => ipcRenderer.invoke('db:get-latest-surge-timestamp', date),
   },
 
   // ---------- 配置操作（electron-store via 主进程） ----------

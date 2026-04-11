@@ -46,6 +46,44 @@
       </div>
     </n-card>
 
+    <!-- 一键同步卡片 -->
+    <n-card :bordered="false" class="sync-card" title="一键同步选股通数据">
+      <template #header-extra>
+        <n-tooltip trigger="hover">
+          <template #trigger>
+            <n-icon :component="InformationCircleOutline" size="18" style="cursor: help" color="#94a3b8" />
+          </template>
+          同步选中区间内的所有市场指标和股票池（涨停、炸板等）数据。
+        </n-tooltip>
+      </template>
+      
+      <n-space vertical size="large">
+        <n-space align="center">
+          <span class="label">选择日期区间:</span>
+          <n-date-picker 
+            v-model:value="dateRange" 
+            type="daterange" 
+            clearable 
+            :is-date-disabled="disableFutureDates"
+            style="width: 300px"
+          />
+          <n-button 
+            type="primary" 
+            :loading="syncing" 
+            :disabled="!dateRange" 
+            @click="handleBatchSync"
+          >
+            <template #icon><n-icon :component="CloudDownloadOutline" /></template>
+            开始同步
+          </n-button>
+        </n-space>
+        
+        <div v-if="syncing" class="sync-info">
+          <n-text depth="3">正在同步数据，请稍候... 可能需要几十秒钟，取决于日期区间大小。</n-text>
+        </div>
+      </n-space>
+    </n-card>
+
     <!-- 说明区域 -->
     <div class="status-legend">
       <div class="legend-item">
@@ -74,12 +112,15 @@ import {
   NButton,
   NSpace,
   NTooltip,
+  NDatePicker,
+  NText,
   useMessage
 } from 'naive-ui'
 import {
   CalendarOutline,
   RefreshOutline,
-  InformationCircleOutline
+  InformationCircleOutline,
+  CloudDownloadOutline
 } from '@vicons/ionicons5'
 
 interface TradingDay {
@@ -157,6 +198,46 @@ const handleDateClick = async (ts: number) => {
   }
 }
 
+// 批量同步相关
+const dateRange = ref<[number, number] | null>(null)
+const syncing = ref(false)
+
+const disableFutureDates = (ts: number) => {
+  return ts > Date.now()
+}
+
+const handleBatchSync = async () => {
+  if (!dateRange.value) return
+  
+  const [startTs, endTs] = dateRange.value
+  const startDate = new Date(startTs).toLocaleDateString('sv')
+  const endDate = new Date(endTs).toLocaleDateString('sv')
+  
+  syncing.value = true
+  try {
+    const api = (window as any).electronAPI
+    if (api?.db?.batchSyncXuanguBao) {
+      message.info(`开始同步 ${startDate} 至 ${endDate} 的数据...`)
+      const result = await api.db.batchSyncXuanguBao({ startDate, endDate })
+      
+      if (result.success) {
+        message.success(`完成数据同步！共处理 ${result.dateCount} 个潜在交易日，成功同步 ${result.syncCount} 天。`)
+        if (result.errors && result.errors.length > 0) {
+          console.warn('同步过程中出现部分错误:', result.errors)
+        }
+        await fetchData() // 刷新日历状态
+      } else {
+        message.error(result.message || '同步失败')
+      }
+    }
+  } catch (err) {
+    console.error('Batch sync failed:', err)
+    message.error('批量同步过程中发生错误')
+  } finally {
+    syncing.value = false
+  }
+}
+
 onMounted(() => {
   fetchData()
 })
@@ -171,9 +252,26 @@ onMounted(() => {
   gap: 16px;
 }
 
-.main-card {
+.main-card, .sync-card {
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.sync-card {
+  margin-bottom: 16px;
+}
+
+.label {
+  font-size: 14px;
+  color: #64748b;
+}
+
+.sync-info {
+  font-size: 13px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-left: 4px solid #3b82f6;
+  border-radius: 4px;
 }
 
 .header-content {

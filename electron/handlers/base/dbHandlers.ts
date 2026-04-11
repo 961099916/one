@@ -5,7 +5,7 @@
  * 渲染进程通过 window.electronAPI.db.* 和 window.electronAPI.config.* 调用
  */
 import { ipcMain } from 'electron'
-import { sessionOps, messageOps, marketDataOps, tradingDayOps, stockPoolOps } from '../../infrastructure/database'
+import { sessionOps, messageOps, marketDataOps, tradingDayOps, stockPoolOps, surgeOps } from '../../infrastructure/database'
 import { appConfigOps } from '../../infrastructure/store'
 import { IpcChannel } from '../../constants'
 import { XuanguBaoService } from '../../services/integration/xuangubaoService'
@@ -267,6 +267,144 @@ export function initDbHandlers(): void {
       return { success }
     } catch (err) {
       log.error('[DB IPC] sync-stock-pool 失败:', err)
+      throw err
+    }
+  })
+
+  // ==================== 每日热点专题数据（追涨热力板） ====================
+
+  /** 获取指定日期的热点板块 */
+  ipcMain.handle(IpcChannel.DB_GET_SURGE_PLATES, (_event, date: string) => {
+    log.info(`[IPC] 调用 DB_GET_SURGE_PLATES, 日期: ${date}`)
+    try {
+      return surgeOps.getPlatesByDate(date)
+    } catch (err) {
+      log.error('[DB IPC] get-surge-plates 失败:', err)
+      throw err
+    }
+  })
+
+  /** 获取指定日期的热点个股 */
+  ipcMain.handle(IpcChannel.DB_GET_SURGE_STOCKS, (_event, date: string) => {
+    log.info(`[IPC] 调用 DB_GET_SURGE_STOCKS, 日期: ${date}`)
+    try {
+      return surgeOps.getStocksByDate(date)
+    } catch (err) {
+      log.error('[DB IPC] get-surge-stocks 失败:', err)
+      throw err
+    }
+  })
+
+  /** 同步指定日期的每日热点数据 */
+  ipcMain.handle(IpcChannel.DB_SYNC_SURGE_DATA, async (_event, date: string) => {
+    log.info(`[IPC] 调用 DB_SYNC_SURGE_DATA, 日期: ${date}`)
+    try {
+      const xuanguBao = XuanguBaoService.getInstance()
+      const success = await xuanguBao.syncSurgeData(date)
+      return { success }
+    } catch (err) {
+      log.error('[DB IPC] sync-surge-data 失败:', err)
+      throw err
+    }
+  })
+
+  /** 获取指定日期下最新的热点数据时间戳 */
+  ipcMain.handle(IpcChannel.DB_GET_LATEST_SURGE_TIMESTAMP, (_event, date: string) => {
+    log.info(`[IPC] 调用 DB_GET_LATEST_SURGE_TIMESTAMP, 日期: ${date}`)
+    try {
+      return surgeOps.getLatestTimestampByDate(date)
+    } catch (err) {
+      log.error('[DB IPC] get-latest-surge-timestamp 失败:', err)
+      throw err
+    }
+  })
+
+  /** 一键批量同步选股通数据（指标 + 所有股票池） */
+  ipcMain.handle(IpcChannel.DB_BATCH_SYNC_XUANGUBAO, async (_event, payload) => {
+    const { startDate, endDate, force = false } = payload || {}
+    log.info('[IPC] 调用 DB_BATCH_SYNC_XUANGUBAO, 范围:', startDate, '至', endDate, 'force:', force)
+    
+    if (!startDate || !endDate) return { success: false, message: '日期参数缺失' }
+
+    const results = { 
+      success: true, 
+      dateCount: 0, 
+      syncCount: 0,
+      errors: [] as string[] 
+    }
+
+    try {
+      const xuanguBao = XuanguBaoService.getInstance()
+      const pools = ['limit_up', 'broken_limit_up', 'limit_down', 'strong_stock', 'yesterday_limit_up']
+      
+      // 生成日期列表
+      const start = new Date(startDate)
+      const end = new Date(endDate)
+      const dateList: string[] = []
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        dateList.push(d.toISOString().split('T')[0])
+      }
+
+      for (const date of dateList) {
+        // 1. 交易日判定逻辑 (复用市场指标同步的拦截逻辑)
+        if (!force && tradingDayOps.isNonTrading(date)) {
+          continue
+        }
+
+        results.dateCount++
+        log.info(`[Batch Sync] 正在同步日期 ${date}...`)
+
+        // A. 同步市场指标
+        try {
+          if (force) marketDataOps.deleteByDate(date)
+          const indicatorData = await xuanguBao.getMarketIndicator(date)
+          
+          let isRealTradingDay = false
+          if (indicatorData && indicatorData.length > 0) {
+            const firstPointDate = new Date(indicatorData[0].timestamp * 1000).toLocaleDateString('sv')
+            if (firstPointDate === date) {
+              isRealTradingDay = true
+              marketDataOps.saveBatch(date, indicatorData)
+              tradingDayOps.saveStatus(date, true)
+              results.syncCount++
+            }
+          }
+
+          if (!isRealTradingDay) {
+            const todayStr = new Date().toLocaleDateString('sv')
+            if (date < todayStr) {
+              tradingDayOps.saveStatus(date, false)
+            }
+            // 如果不是交易日，跳过股票池同步
+            continue 
+          }
+        } catch (err) {
+          log.error(`[Batch Sync] 同步 ${date} 市场指标失败:`, err)
+          results.errors.push(`${date} 市场指标同步失败`)
+        }
+
+        // B. 同步所有股票池
+        for (const poolName of pools) {
+          try {
+            await xuanguBao.syncStockPool(poolName, date)
+          } catch (err) {
+            log.error(`[Batch Sync] 同步 ${date} 股票池 ${poolName} 失败:`, err)
+            results.errors.push(`${date} ${poolName} 同步失败`)
+          }
+        }
+
+        // C. 同步每日热点数据
+        try {
+          await xuanguBao.syncSurgeData(date)
+        } catch (err) {
+          log.error(`[Batch Sync] 同步 ${date} 每日热点失败:`, err)
+          results.errors.push(`${date} 每日热点同步失败`)
+        }
+      }
+
+      return results
+    } catch (err) {
+      log.error('[DB IPC] batch-sync-xuangubao 失败:', err)
       throw err
     }
   })

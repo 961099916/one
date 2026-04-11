@@ -7,7 +7,7 @@ import type { Database } from 'better-sqlite3'
 import { getDB } from './connection'
 
 // 当前数据库期望的最新版本
-const LATEST_SCHEMA_VERSION = 6
+const LATEST_SCHEMA_VERSION = 8
 
 /**
  * 初始化数据库架构并执行迁移
@@ -52,6 +52,16 @@ export function initDatabaseSchema(): void {
         if (currentVersion < 6) {
           log.info('[Database] 正在执行迁移 V6: 初始化个股分池数据表...')
           migrateToV6(db)
+        }
+
+        if (currentVersion < 7) {
+          log.info('[Database] 正在执行迁移 V7: 初始化每日题材热点数据表...')
+          migrateToV7(db)
+        }
+
+        if (currentVersion < 8) {
+          log.info('[Database] 正在执行迁移 V8: 为热点数据增加时间戳支持...')
+          migrateToV8(db)
         }
         
         // 更新版本号
@@ -196,4 +206,102 @@ function migrateToV6(db: Database): void {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_stock_pool_date ON stock_pool_data(date)`)
   db.exec(`CREATE INDEX IF NOT EXISTS idx_stock_pool_symbol ON stock_pool_data(symbol)`)
   db.exec(`CREATE INDEX IF NOT EXISTS idx_stock_pool_query ON stock_pool_data(pool_name, date)`)
+}
+
+/**
+ * 迁移 V7: 初始化每日题材热点数据表
+ */
+function migrateToV7(db: Database): void {
+  // 题材板块表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS surge_plates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date TEXT NOT NULL,
+      plate_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT,
+      created_at INTEGER NOT NULL,
+      UNIQUE(date, plate_id)
+    )
+  `)
+
+  // 热点个股表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS surge_stocks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date TEXT NOT NULL,
+      symbol TEXT NOT NULL,
+      stock_name TEXT NOT NULL,
+      price REAL,
+      change_percent REAL,
+      description TEXT,
+      plate_ids TEXT, -- 存储为 JSON 字符串: [id1, id2, ...]
+      is_limit_up INTEGER DEFAULT 0,
+       enter_time INTEGER,
+      raw_data TEXT,
+      created_at INTEGER NOT NULL,
+      UNIQUE(date, symbol)
+    )
+  `)
+
+  // 索引
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_surge_plates_date ON surge_plates(date)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_surge_stocks_date ON surge_stocks(date)`)
+}
+
+/**
+ * 迁移 V8: 为热点数据增加时间戳支持
+ */
+function migrateToV8(db: Database): void {
+  // 1. 迁移 surge_plates (题材板块表)
+  // 虽然 SQLite 不支持直接修改唯一约束，我们可以通过影子表迁移原始数据
+  db.exec('ALTER TABLE surge_plates RENAME TO surge_plates_old')
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS surge_plates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date TEXT NOT NULL,
+      timestamp INTEGER NOT NULL,
+      plate_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT,
+      created_at INTEGER NOT NULL,
+      UNIQUE(timestamp, plate_id)
+    )
+  `)
+  // 将旧数据迁移，时间戳默认取当天 15:00:00 (Unix 秒)
+  db.exec(`
+    INSERT INTO surge_plates (date, timestamp, plate_id, name, description, created_at)
+    SELECT date, strftime('%s', date || ' 15:00:00'), plate_id, name, description, created_at FROM surge_plates_old
+  `)
+  db.exec('DROP TABLE surge_plates_old')
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_surge_plates_timestamp ON surge_plates(timestamp)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_surge_plates_date ON surge_plates(date)`)
+
+  // 2. 迁移 surge_stocks (热点个股表)
+  db.exec('ALTER TABLE surge_stocks RENAME TO surge_stocks_old')
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS surge_stocks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date TEXT NOT NULL,
+      timestamp INTEGER NOT NULL,
+      symbol TEXT NOT NULL,
+      stock_name TEXT NOT NULL,
+      price REAL,
+      change_percent REAL,
+      description TEXT,
+      plate_ids TEXT, 
+      is_limit_up INTEGER DEFAULT 0,
+       enter_time INTEGER,
+      raw_data TEXT,
+      created_at INTEGER NOT NULL,
+      UNIQUE(timestamp, symbol)
+    )
+  `)
+  db.exec(`
+    INSERT INTO surge_stocks (date, timestamp, symbol, stock_name, price, change_percent, description, plate_ids, is_limit_up, enter_time, raw_data, created_at)
+    SELECT date, strftime('%s', date || ' 15:00:00'), symbol, stock_name, price, change_percent, description, plate_ids, is_limit_up, enter_time, raw_data, created_at FROM surge_stocks_old
+  `)
+  db.exec('DROP TABLE surge_stocks_old')
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_surge_stocks_timestamp ON surge_stocks(timestamp)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_surge_stocks_date ON surge_stocks(date)`)
 }

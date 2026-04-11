@@ -15,6 +15,7 @@ import {
   ListOutline,
   FlashOutline,
   TrendingDownOutline,
+  TrendingUpOutline,
 } from '@vicons/ionicons5'
 import { RoutePath } from '@/constants'
 
@@ -97,6 +98,12 @@ export const menuConfig: MenuItem[] = [
         title: '跌停池分析',
         icon: TrendingDownOutline,
         order: 7,
+      },
+      {
+        path: 'surge',
+        title: '每日热点分析',
+        icon: TrendingUpOutline,
+        order: 8,
       }
     ]
   },
