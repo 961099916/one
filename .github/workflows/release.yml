@@ -26,7 +26,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 24
+          node-version: 22
 
       - name: Set Release Version
         id: set-version
@@ -98,7 +98,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install Linux Dependencies
@@ -108,7 +108,9 @@ jobs:
           sudo apt-get install -y rpm fakeroot dpkg
 
       - name: Install Dependencies
-        run: npm install
+        run: |
+          npm cache clean --force
+          npm ci || npm install
 
       - name: Set Release Version
         shell: bash
