@@ -99,7 +99,6 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: 'npm'
 
       - name: Install Linux Dependencies
         if: matrix.platform == 'linux'
@@ -107,10 +106,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y rpm fakeroot dpkg
 
+      - name: Debug package.json
+        run: cat package.json | grep version
+
+      - name: Check version
+        run: npm -v && node -v
+
       - name: Install Dependencies
         run: |
           npm cache clean --force
-          npm ci || npm install
+          npm install --legacy-peer-deps
 
       - name: Set Release Version
         shell: bash
