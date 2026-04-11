@@ -7,7 +7,7 @@ import type { Database } from 'better-sqlite3'
 import { getDB } from './connection'
 
 // 当前数据库期望的最新版本
-const LATEST_SCHEMA_VERSION = 2
+const LATEST_SCHEMA_VERSION = 6
 
 /**
  * 初始化数据库架构并执行迁移
@@ -32,6 +32,26 @@ export function initDatabaseSchema(): void {
         if (currentVersion < 2) {
           log.info('[Database] 正在执行迁移 V2: 初始化选股通数据表...')
           migrateToV2(db)
+        }
+        
+        if (currentVersion < 3) {
+          log.info('[Database] 正在执行迁移 V3: 增加涨跌停统计字段...')
+          migrateToV3(db)
+        }
+
+        if (currentVersion < 4) {
+          log.info('[Database] 正在执行迁移 V4: 增加炸板统计字段...')
+          migrateToV4(db)
+        }
+
+        if (currentVersion < 5) {
+          log.info('[Database] 正在执行迁移 V5: 增加市场温度字段...')
+          migrateToV5(db)
+        }
+
+        if (currentVersion < 6) {
+          log.info('[Database] 正在执行迁移 V6: 初始化个股分池数据表...')
+          migrateToV6(db)
         }
         
         // 更新版本号
@@ -107,4 +127,73 @@ function migrateToV2(db: Database): void {
 
   // 索引
   db.exec(`CREATE INDEX IF NOT EXISTS idx_market_data_date ON market_data(date)`)
+}
+
+/**
+ * 迁移 V3: 增加涨跌停统计字段
+ */
+function migrateToV3(db: Database): void {
+  // SQLite 不支持一次性添加多列，需分两次执行
+  try {
+    db.exec(`ALTER TABLE market_data ADD COLUMN limit_up_count INTEGER DEFAULT 0`)
+    db.exec(`ALTER TABLE market_data ADD COLUMN limit_down_count INTEGER DEFAULT 0`)
+  } catch (err) {
+    // 忽略“列已存在”的错误（防御性编程）
+    log.warn('[Database] 迁移 V3 警告:', err)
+  }
+}
+/**
+ * 迁移 V4: 增加炸板统计字段
+ */
+function migrateToV4(db: Database): void {
+  try {
+    db.exec(`ALTER TABLE market_data ADD COLUMN limit_up_broken_count INTEGER DEFAULT 0`)
+    db.exec(`ALTER TABLE market_data ADD COLUMN limit_up_broken_ratio REAL DEFAULT 0`)
+  } catch (err) {
+    log.warn('[Database] 迁移 V4 警告:', err)
+  }
+}
+/**
+ * 迁移 V5: 增加市场温度字段
+ */
+function migrateToV5(db: Database): void {
+  try {
+    db.exec(`ALTER TABLE market_data ADD COLUMN market_temperature REAL DEFAULT 0`)
+  } catch (err) {
+    log.warn('[Database] 迁移 V5 警告:', err)
+  }
+}
+
+/**
+ * 迁移 V6: 初始化个股分池数据表 (涨停池、跌停池等)
+ */
+function migrateToV6(db: Database): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS stock_pool_data (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      pool_name TEXT NOT NULL,
+      date TEXT NOT NULL,
+      symbol TEXT NOT NULL,
+      stock_name TEXT,
+      reason_info TEXT,
+      latest_price REAL,
+      change_percent REAL,
+      buy_lock_ratio REAL,
+      turnover_ratio REAL,
+      non_restricted_cap REAL,
+      total_cap REAL,
+      first_limit_up_time INTEGER,
+      last_limit_up_time INTEGER,
+      break_count INTEGER DEFAULT 0,
+      board_count INTEGER DEFAULT 0,
+      raw_data TEXT,
+      created_at INTEGER NOT NULL,
+      UNIQUE(pool_name, date, symbol)
+    )
+  `)
+
+  // 索引
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_stock_pool_date ON stock_pool_data(date)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_stock_pool_symbol ON stock_pool_data(symbol)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_stock_pool_query ON stock_pool_data(pool_name, date)`)
 }

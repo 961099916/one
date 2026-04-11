@@ -142,6 +142,16 @@ export const RoutePath = {
   XUANGUBAO_INDICATOR: '/xuangubao/indicator',
   /** 交易日历管理 */
   XUANGUBAO_CALENDAR: '/xuangubao/calendar',
+  /** 涨停池分析 */
+  XUANGUBAO_LIMIT_UP: '/xuangubao/limit-up',
+  /** 炸板池分析 */
+  XUANGUBAO_LIMIT_UP_BROKEN: '/xuangubao/limit-up-broken',
+  /** 昨日涨停池分析 */
+  XUANGUBAO_YESTERDAY_LIMIT_UP: '/xuangubao/yesterday-limit-up',
+  /** 强势股分析 */
+  XUANGUBAO_STRONG_STOCK: '/xuangubao/strong-stock',
+  /** 跌停池分析 */
+  XUANGUBAO_LIMIT_DOWN: '/xuangubao/limit-down',
 } as const
 
 /** 路由名称常量 */
@@ -155,6 +165,11 @@ export const RouteName = {
   MARKET_DATA: 'MarketData',
   XUANGUBAO: 'XuanguBao',
   XUANGUBAO_INDICATOR: 'XuanguBaoIndicator',
+  XUANGUBAO_LIMIT_UP: 'XuanguBaoLimitUp',
+  XUANGUBAO_LIMIT_UP_BROKEN: 'XuanguBaoLimitUpBroken',
+  XUANGUBAO_YESTERDAY_LIMIT_UP: 'XuanguBaoYesterdayLimitUp',
+  XUANGUBAO_STRONG_STOCK: 'XuanguBaoStrongStock',
+  XUANGUBAO_LIMIT_DOWN: 'XuanguBaoLimitDown',
 } as const
 
 // ==================== 菜单配置 ====================

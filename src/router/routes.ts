@@ -81,6 +81,46 @@ export const baseRoutes: AppRouteRecordRaw[] = [
             meta: {
               title: '交易日历管理',
             },
+          },
+          {
+            path: 'limit-up',
+            name: RouteName.XUANGUBAO_LIMIT_UP,
+            component: () => import('@/views/MarketLimitUp.vue'),
+            meta: {
+              title: '涨停池分析',
+            },
+          },
+          {
+            path: 'limit-up-broken',
+            name: RouteName.XUANGUBAO_LIMIT_UP_BROKEN,
+            component: () => import('@/views/MarketBrokenLimitUp.vue'),
+            meta: {
+              title: '炸板池分析',
+            },
+          },
+          {
+            path: 'yesterday-limit-up',
+            name: RouteName.XUANGUBAO_YESTERDAY_LIMIT_UP,
+            component: () => import('@/views/MarketYesterdayLimitUp.vue'),
+            meta: {
+              title: '昨日涨停池分析',
+            },
+          },
+          {
+            path: 'strong-stock',
+            name: RouteName.XUANGUBAO_STRONG_STOCK,
+            component: () => import('@/views/MarketStrongStock.vue'),
+            meta: {
+              title: '强势股分析',
+            },
+          },
+          {
+            path: 'limit-down',
+            name: RouteName.XUANGUBAO_LIMIT_DOWN,
+            component: () => import('@/views/MarketLimitDown.vue'),
+            meta: {
+              title: '跌停池分析',
+            },
           }
         ]
       },

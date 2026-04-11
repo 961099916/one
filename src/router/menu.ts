@@ -10,6 +10,11 @@ import {
   OptionsOutline,
   InformationCircleOutline,
   BarChartOutline,
+  Analytics,
+  CloseCircleOutline,
+  ListOutline,
+  FlashOutline,
+  TrendingDownOutline,
 } from '@vicons/ionicons5'
 import { RoutePath } from '@/constants'
 
@@ -62,6 +67,36 @@ export const menuConfig: MenuItem[] = [
         title: '交易日历管理',
         icon: InformationCircleOutline,
         order: 2,
+      },
+      {
+        path: 'limit-up',
+        title: '涨停池分析',
+        icon: Analytics,
+        order: 3,
+      },
+      {
+        path: 'limit-up-broken',
+        title: '炸板池分析',
+        icon: CloseCircleOutline,
+        order: 4,
+      },
+      {
+        path: 'yesterday-limit-up',
+        title: '昨日涨停池分析',
+        icon: ListOutline,
+        order: 5,
+      },
+      {
+        path: 'strong-stock',
+        title: '强势股分析',
+        icon: FlashOutline,
+        order: 6,
+      },
+      {
+        path: 'limit-down',
+        title: '跌停池分析',
+        icon: TrendingDownOutline,
+        order: 7,
       }
     ]
   },

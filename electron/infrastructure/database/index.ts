@@ -1,8 +1,8 @@
 /**
  * 数据库模块统一导出
  */
-export { initDB, closeDB, sessionOps, messageOps, marketDataOps, tradingDayOps, getDBInstance } from './sqlite'
-export type { SessionRow, MessageRow, MarketDataRow } from './sqlite'
+export { initDB, closeDB, sessionOps, messageOps, marketDataOps, tradingDayOps, stockPoolOps, getDBInstance } from './sqlite'
+export type { SessionRow, MessageRow, MarketDataRow, StockPoolRow } from './sqlite'
 export {
   initStorageDirs,
   getStorageRoot,

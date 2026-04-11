@@ -26,11 +26,19 @@ export const XuanguBaoConfig = {
   ENDPOINTS: {
     /** 市场指标 */
     MARKET_INDICATOR: '/market_indicator/line',
+    /** 股票池详情（涨停池、炸板池等） */
+    STOCK_POOL: '/pool/detail',
   },
   /** API 字段 */
   FIELDS: {
     /** 涨跌数量 */
     RISE_FALL_COUNT: 'rise_count,fall_count',
+    /** 涨跌停数量 */
+    LIMIT_UP_DOWN_COUNT: 'limit_up_count,limit_down_count',
+    /** 炸板数据 */
+    LIMIT_UP_BROKEN: 'limit_up_broken_count,limit_up_broken_ratio',
+    /** 市场温度 */
+    MARKET_TEMPERATURE: 'market_temperature',
   },
 } as const
 
@@ -137,6 +145,8 @@ export const IpcChannel = {
   DB_SYNC_MARKET_DATA: 'db:sync-market-data',
   DB_GET_ALL_TRADING_DAYS: 'db:get-all-trading-days',
   DB_UPDATE_TRADING_DAY: 'db:update-trading-day',
+  DB_GET_STOCK_POOL: 'db:get-stock-pool',
+  DB_SYNC_STOCK_POOL: 'db:sync-stock-pool',
 
   // 配置（electron-store）
   CONFIG_GET: 'config:get',

@@ -48,6 +48,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getAllTradingDays: () => ipcRenderer.invoke('db:get-all-trading-days'),
     updateTradingDay: (params: { date: string, isTrading: boolean }) => 
       ipcRenderer.invoke('db:update-trading-day', params),
+    getStockPool: (params: { poolName: string, date: string }) => 
+      ipcRenderer.invoke('db:get-stock-pool', params),
+    syncStockPool: (params: { poolName: string, date: string }) => 
+      ipcRenderer.invoke('db:sync-stock-pool', params),
   },
 
   // ---------- 配置操作（electron-store via 主进程） ----------

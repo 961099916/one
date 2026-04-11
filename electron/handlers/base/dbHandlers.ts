@@ -5,7 +5,7 @@
  * 渲染进程通过 window.electronAPI.db.* 和 window.electronAPI.config.* 调用
  */
 import { ipcMain } from 'electron'
-import { sessionOps, messageOps, marketDataOps, tradingDayOps } from '../../infrastructure/database'
+import { sessionOps, messageOps, marketDataOps, tradingDayOps, stockPoolOps } from '../../infrastructure/database'
 import { appConfigOps } from '../../infrastructure/store'
 import { IpcChannel } from '../../constants'
 import { XuanguBaoService } from '../../services/integration/xuangubaoService'
@@ -166,6 +166,11 @@ export function initDbHandlers(): void {
           continue
         }
 
+        // 如果是强制同步，先删除本地该日期的旧数据，确保重新同步能写入（避免 IGNORE 逻辑导致无法更新字段）
+        if (force) {
+          marketDataOps.deleteByDate(date)
+        }
+
         // 2. 发起请求
         const data = await xuanguBao.getMarketIndicator(date)
 
@@ -178,7 +183,16 @@ export function initDbHandlers(): void {
           const firstPointDate = new Date(data[0].timestamp * 1000).toLocaleDateString('sv')
           if (firstPointDate === date) {
             isRealTradingDay = true
-            validData = data
+            validData = data.map(item => ({
+              timestamp: item.timestamp,
+              rise_count: item.rise_count,
+              fall_count: item.fall_count,
+              limit_up_count: item.limit_up_count,
+              limit_down_count: item.limit_down_count,
+              limit_up_broken_count: item.limit_up_broken_count,
+              limit_up_broken_ratio: item.limit_up_broken_ratio,
+              market_temperature: item.market_temperature
+            }))
           } else {
             log.info(`[Sync] 日期 ${date} 的 API 返回数据所属日期为 ${firstPointDate}，判定 ${date} 为休市`)
           }
@@ -227,6 +241,32 @@ export function initDbHandlers(): void {
       return { success: true }
     } catch (err) {
       log.error('[DB IPC] update-trading-day 失败:', err)
+      throw err
+    }
+  })
+
+  // ==================== 股票池数据操作（SQLite） ====================
+
+  /** 获取指定日期和池子的股票数据 */
+  ipcMain.handle(IpcChannel.DB_GET_STOCK_POOL, (_event, { poolName, date }) => {
+    log.info(`[IPC] 调用 DB_GET_STOCK_POOL, 池子: ${poolName}, 日期: ${date}`)
+    try {
+      return stockPoolOps.getByPoolAndDate(poolName, date)
+    } catch (err) {
+      log.error('[DB IPC] get-stock-pool 失败:', err)
+      throw err
+    }
+  })
+
+  /** 同步指定日期和池子的股票数据 */
+  ipcMain.handle(IpcChannel.DB_SYNC_STOCK_POOL, async (_event, { poolName, date }) => {
+    log.info(`[IPC] 调用 DB_SYNC_STOCK_POOL, 池子: ${poolName}, 日期: ${date}`)
+    try {
+      const xuanguBao = XuanguBaoService.getInstance()
+      const success = await xuanguBao.syncStockPool(poolName, date)
+      return { success }
+    } catch (err) {
+      log.error('[DB IPC] sync-stock-pool 失败:', err)
       throw err
     }
   })

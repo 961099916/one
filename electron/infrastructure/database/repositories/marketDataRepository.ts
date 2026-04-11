@@ -35,18 +35,44 @@ export const marketDataRepository = {
   /**
    * 批量保存全量分时数据
    */
-  saveBatch(date: string, points: { timestamp: number, rise_count: number, fall_count: number }[]): void {
+  saveBatch(date: string, points: { 
+    timestamp: number, 
+    rise_count: number, 
+    fall_count: number, 
+    limit_up_count?: number, 
+    limit_down_count?: number,
+    limit_up_broken_count?: number,
+    limit_up_broken_ratio?: number,
+    market_temperature?: number
+  }[]): void {
     const db = getDB()
     const now = Date.now()
 
     const insert = db.prepare(`
-      INSERT OR IGNORE INTO market_data (date, timestamp, rise_count, fall_count, created_at)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT OR IGNORE INTO market_data (
+        date, timestamp, rise_count, fall_count, 
+        limit_up_count, limit_down_count, 
+        limit_up_broken_count, limit_up_broken_ratio, 
+        market_temperature,
+        created_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
 
     const transaction = db.transaction((records) => {
       for (const record of records) {
-        insert.run(date, record.timestamp, record.rise_count, record.fall_count, now)
+        insert.run(
+          date, 
+          record.timestamp, 
+          record.rise_count, 
+          record.fall_count, 
+          record.limit_up_count || 0,
+          record.limit_down_count || 0,
+          record.limit_up_broken_count || 0,
+          record.limit_up_broken_ratio || 0,
+          record.market_temperature || 0,
+          now
+        )
       }
     })
 
