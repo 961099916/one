@@ -72,6 +72,8 @@ export const LogTags = {
   XUANGUBAO: '[XuanguBao]',
   /** 同花顺服务 */
   TONGHUASHUN: '[TongHuaShun]',
+  /** 通达信服务 */
+  TDX: '[TDX]',
 } as const
 
 // ==================== 同花顺配置 ====================
@@ -129,6 +131,8 @@ export const IpcChannel = {
   APP_RELAUNCH: 'app:relaunch',
   APP_SET_LOGIN_ITEM: 'app:set-login-item',
   APP_GET_LOGIN_ITEM: 'app:get-login-item',
+  APP_PROXY_FETCH: 'app:proxy-fetch',
+  APP_SELECT_DIRECTORY: 'app:select-directory',
 
   // 自动更新
   UPDATE_CHECK: 'update:check',
@@ -156,6 +160,8 @@ export const IpcChannel = {
   DB_GET_SURGE_STOCKS: 'db:get-surge-stocks',
   DB_SYNC_SURGE_DATA: 'db:sync-surge-data',
   DB_GET_LATEST_SURGE_TIMESTAMP: 'db:get-latest-surge-timestamp',
+  DB_GET_SURGE_TIMESTAMPS: 'db:get-surge-timestamps',
+  DB_GET_SURGE_HISTORICAL_DATES: 'db:get-surge-historical-dates',
 
   // 配置（electron-store）
   CONFIG_GET: 'config:get',
@@ -175,4 +181,8 @@ export const IpcChannel = {
   // 同花顺联动
   OPEN_TONGHUASHUN_STOCK: 'open-tonghuashun-stock',
   OPEN_TONGHUASHUN_APP: 'open-tonghuashun-app',
+
+  // 通达信本地数据
+  TDX_GET_MINUTE_DATA: 'tdx:get-minute-data',
+  TDX_OPEN_STOCK: 'tdx:open-stock',
 } as const

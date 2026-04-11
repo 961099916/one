@@ -154,6 +154,8 @@ export const RoutePath = {
   XUANGUBAO_LIMIT_DOWN: '/xuangubao/limit-down',
   /** 每日热点分析 */
   XUANGUBAO_SURGE: '/xuangubao/surge',
+  /** 热点深度复盘 */
+  XUANGUBAO_SURGE_REVIEW: '/xuangubao/surge-review',
 } as const
 
 /** 路由名称常量 */
@@ -173,6 +175,7 @@ export const RouteName = {
   XUANGUBAO_STRONG_STOCK: 'XuanguBaoStrongStock',
   XUANGUBAO_LIMIT_DOWN: 'XuanguBaoLimitDown',
   XUANGUBAO_SURGE: 'XuanguBaoSurge',
+  XUANGUBAO_SURGE_REVIEW: 'XuanguBaoSurgeReview',
 } as const
 
 // ==================== 菜单配置 ====================

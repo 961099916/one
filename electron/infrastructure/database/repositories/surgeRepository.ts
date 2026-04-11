@@ -10,15 +10,20 @@ import type { SurgePlateRow, SurgeStockRow } from '../types'
  * 热点题材数据仓储操作
  */
 export const surgeRepository = {
-  getPlatesByDate(date: string): SurgePlateRow[] {
+  getPlatesByDate(params: { date: string, timestamp?: number }): SurgePlateRow[] {
+    const { date, timestamp } = params
     const db = getDB()
-    // 获取该日期下最新的一个时间戳
-    const latestTsRow = db.prepare('SELECT MAX(timestamp) as ts FROM surge_plates WHERE date = ?').get(date) as { ts: number } | undefined
     
-    if (!latestTsRow || !latestTsRow.ts) return []
+    let targetTs = timestamp
+    if (!targetTs) {
+      // 获取该日期下最新的一个时间戳
+      const latestTsRow = db.prepare('SELECT MAX(timestamp) as ts FROM surge_plates WHERE date = ?').get(date) as { ts: number } | undefined
+      if (!latestTsRow || !latestTsRow.ts) return []
+      targetTs = latestTsRow.ts
+    }
 
     const stmt = db.prepare('SELECT * FROM surge_plates WHERE timestamp = ? ORDER BY id ASC')
-    return stmt.all(latestTsRow.ts) as SurgePlateRow[]
+    return stmt.all(targetTs) as SurgePlateRow[]
   },
 
   /**
@@ -30,15 +35,40 @@ export const surgeRepository = {
     return row?.ts || null
   },
 
-  getStocksByDate(date: string): SurgeStockRow[] {
+  getStocksByDate(params: { date: string, timestamp?: number }): SurgeStockRow[] {
+    const { date, timestamp } = params
     const db = getDB()
-    // 获取该日期下最新的一个时间戳
-    const latestTsRow = db.prepare('SELECT MAX(timestamp) as ts FROM surge_stocks WHERE date = ?').get(date) as { ts: number } | undefined
     
-    if (!latestTsRow || !latestTsRow.ts) return []
+    let targetTs = timestamp
+    if (!targetTs) {
+      // 获取该日期下最新的一个时间戳
+      const latestTsRow = db.prepare('SELECT MAX(timestamp) as ts FROM surge_stocks WHERE date = ?').get(date) as { ts: number } | undefined
+      if (!latestTsRow || !latestTsRow.ts) return []
+      targetTs = latestTsRow.ts
+    }
 
     const stmt = db.prepare('SELECT * FROM surge_stocks WHERE timestamp = ? ORDER BY change_percent DESC')
-    return stmt.all(latestTsRow.ts) as SurgeStockRow[]
+    return stmt.all(targetTs) as SurgeStockRow[]
+  },
+
+  /**
+   * 获取某天内所有可用的时间戳快照点
+   */
+  getTimestampsByDate(date: string): number[] {
+    const db = getDB()
+    const stmt = db.prepare('SELECT DISTINCT timestamp FROM surge_plates WHERE date = ? ORDER BY timestamp DESC')
+    const rows = stmt.all(date) as { timestamp: number }[]
+    return rows.map(r => r.timestamp)
+  },
+
+  /**
+   * 获取数据库中存在热点数据的所有日期列表
+   */
+  getHistoricalDates(): string[] {
+    const db = getDB()
+    const stmt = db.prepare('SELECT DISTINCT date FROM surge_plates ORDER BY date DESC')
+    const rows = stmt.all() as { date: string }[]
+    return rows.map(r => r.date)
   },
 
   /**

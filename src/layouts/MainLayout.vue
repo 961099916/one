@@ -20,7 +20,12 @@
         <AppHeader :is-dark="isDark" :app-version="appVersion" @theme-toggle="toggleTheme" />
       </n-layout-header>
 
-      <n-layout-content class="content-container" :native-scrollbar="false">
+      <n-layout-content 
+        class="content-container" 
+        :native-scrollbar="false"
+        style="height: 100%; overflow: hidden;"
+        content-style="height: 100%; display: flex; flex-direction: column;"
+      >
         <AppMain />
       </n-layout-content>
     </n-layout>
@@ -71,7 +76,6 @@ function toggleTheme() {
   height: 100vh;
   width: 100vw;
   background-color: var(--bg-app);
-  margin-top: 10px;
 }
 
 .sidebar-sider {
@@ -93,6 +97,6 @@ function toggleTheme() {
 
 .content-container {
   background-color: var(--bg-app);
-  padding: 16px;
+  padding: 0;
 }
 </style>

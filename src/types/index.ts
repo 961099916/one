@@ -79,6 +79,8 @@ export interface AppSettings {
   sidebarWidth: number
   /** 启动时是否自动加载上次的模型 */
   autoLoadModel: boolean
+  /** 通达信数据路径 (vipdoc 目录) */
+  tdxPath: string
 }
 
 /** 窗口状态接口 */

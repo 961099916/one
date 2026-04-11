@@ -1,4 +1,4 @@
-import { app, ipcMain, shell } from 'electron'
+import { app, ipcMain, shell, dialog, BrowserWindow } from 'electron'
 import log from 'electron-log'
 import { IpcChannel } from '../../constants'
 
@@ -46,4 +46,32 @@ export function initAppHandlers(): void {
     return app.getLoginItemSettings().openAtLogin
   })
 
+  ipcMain.handle(IpcChannel.APP_PROXY_FETCH, async (_event, url: string) => {
+    log.info('[IPC] 调用 APP_PROXY_FETCH, URL:', url)
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+        }
+      })
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      return await response.json()
+    } catch (err: any) {
+      log.error('[IPC] APP_PROXY_FETCH 失败:', err.message)
+      return { error: err.message }
+    }
+  })
+
+  ipcMain.handle(IpcChannel.APP_SELECT_DIRECTORY, async () => {
+    log.info('[IPC] 调用 APP_SELECT_DIRECTORY')
+    const result = await dialog.showOpenDialog({
+      properties: ['openDirectory']
+    })
+    if (result.canceled) {
+      return null
+    }
+    return result.filePaths[0]
+  })
 }

@@ -13,9 +13,10 @@
 
 <style scoped>
 .app-main {
+  height: 100%;
   flex: 1;
-  padding: 20px;
-  overflow: auto;
+  padding: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }

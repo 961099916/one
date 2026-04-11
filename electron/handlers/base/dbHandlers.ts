@@ -274,10 +274,10 @@ export function initDbHandlers(): void {
   // ==================== 每日热点专题数据（追涨热力板） ====================
 
   /** 获取指定日期的热点板块 */
-  ipcMain.handle(IpcChannel.DB_GET_SURGE_PLATES, (_event, date: string) => {
-    log.info(`[IPC] 调用 DB_GET_SURGE_PLATES, 日期: ${date}`)
+  ipcMain.handle(IpcChannel.DB_GET_SURGE_PLATES, (_event, params: { date: string, timestamp?: number }) => {
+    log.info(`[IPC] 调用 DB_GET_SURGE_PLATES, 参数:`, params)
     try {
-      return surgeOps.getPlatesByDate(date)
+      return surgeOps.getPlatesByDate(params)
     } catch (err) {
       log.error('[DB IPC] get-surge-plates 失败:', err)
       throw err
@@ -285,12 +285,34 @@ export function initDbHandlers(): void {
   })
 
   /** 获取指定日期的热点个股 */
-  ipcMain.handle(IpcChannel.DB_GET_SURGE_STOCKS, (_event, date: string) => {
-    log.info(`[IPC] 调用 DB_GET_SURGE_STOCKS, 日期: ${date}`)
+  ipcMain.handle(IpcChannel.DB_GET_SURGE_STOCKS, (_event, params: { date: string, timestamp?: number }) => {
+    log.info(`[IPC] 调用 DB_GET_SURGE_STOCKS, 参数:`, params)
     try {
-      return surgeOps.getStocksByDate(date)
+      return surgeOps.getStocksByDate(params)
     } catch (err) {
       log.error('[DB IPC] get-surge-stocks 失败:', err)
+      throw err
+    }
+  })
+
+  /** 获取指定日期下所有快照时间点 */
+  ipcMain.handle(IpcChannel.DB_GET_SURGE_TIMESTAMPS, (_event, date: string) => {
+    log.info(`[IPC] 调用 DB_GET_SURGE_TIMESTAMPS, 日期: ${date}`)
+    try {
+      return surgeOps.getTimestampsByDate(date)
+    } catch (err) {
+      log.error('[DB IPC] get-surge-timestamps 失败:', err)
+      throw err
+    }
+  })
+
+  /** 获取所有历史热点日期 */
+  ipcMain.handle(IpcChannel.DB_GET_SURGE_HISTORICAL_DATES, () => {
+    log.info(`[IPC] 调用 DB_GET_SURGE_HISTORICAL_DATES`)
+    try {
+      return surgeOps.getHistoricalDates()
+    } catch (err) {
+      log.error('[DB IPC] get-surge-historical-dates 失败:', err)
       throw err
     }
   })

@@ -62,7 +62,7 @@ export class XuanguBaoService {
     const startTime = performance.now()
     try {
       log.info(`${LogTags.XUANGUBAO} [Request] ${url}`)
-      
+
       const response = await fetch(url, {
         method: HttpMethods.GET,
         headers: {
@@ -79,7 +79,7 @@ export class XuanguBaoService {
       }
 
       const result = (await response.json()) as XuanguBaoResponse<T>
-      
+
       if (result.code !== 20000) {
         log.error(`${LogTags.XUANGUBAO} [Business Error] Code: ${result.code}, Message: ${result.message || '未知错误'}, 耗时: ${duration}ms, URL: ${url}`)
         return null
@@ -107,10 +107,10 @@ export class XuanguBaoService {
       XuanguBaoConfig.FIELDS.LIMIT_UP_BROKEN,
       XuanguBaoConfig.FIELDS.MARKET_TEMPERATURE
     ].join(',')
-    
+
     const url = `${XuanguBaoConfig.API_BASE}${XuanguBaoConfig.ENDPOINTS.MARKET_INDICATOR}?fields=${fields}&date=${date}`
     const data = await this.fetchWithValidation<MarketIndicatorData[]>(url, `获取分时数据, 日期: ${date}`)
-    
+
     return data || []
   }
 
@@ -136,7 +136,7 @@ export class XuanguBaoService {
         const platesStr = plates.length > 0 ? ` [${plates.map((p: any) => p.plate_name).join(', ')}]` : ''
         reasonText = `${item.surge_reason.stock_reason || ''}${platesStr}`
       }
-      
+
       return {
         pool_name: poolName,
         date: date,
@@ -255,12 +255,12 @@ export class XuanguBaoService {
           }
         })
         surgeRepository.saveStocksBatch(stockRows)
-        
+
         // 3. 兜底逻辑：从个股中提取板块
         if (plateRows.length === 0 && stockRows.length > 0) {
           log.info(`${LogTags.XUANGUBAO} Plates API 无返回，从个股数据中提取板块...`)
           const extractedPlatesMap = new Map<number, SurgePlateRow>()
-          
+
           itemsList.forEach((item: any) => {
             const platesFields = item[fieldMap['plates']] || []
             if (Array.isArray(platesFields)) {

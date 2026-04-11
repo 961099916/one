@@ -138,7 +138,39 @@
       </div>
     </section>
 
-    <!-- 高级 -->
+    <!-- 系统相关配置 -->
+    <section class="setting-section">
+      <h3 class="section-title">系统</h3>
+      <!-- ... 原有内容将被保留，但在局部替换逻辑中我们专注于新增内容 -->
+    </section>
+
+    <!-- 数据源 -->
+    <section class="setting-section">
+      <h3 class="section-title">数据源</h3>
+      <div class="setting-card">
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">通达信数据路径</span>
+            <span class="setting-desc">指定通达信安装目录下的 vipdoc 文件夹，用于加载分时对比数据</span>
+          </div>
+          <div class="input-action-wrap">
+            <input 
+              type="text" 
+              class="text-input" 
+              :value="settings.tdxPath" 
+              placeholder="例如: C:\tdx\vipdoc"
+              @change="e => updateSettings({ tdxPath: (e.target as HTMLInputElement).value })"
+            />
+            <button 
+              class="btn btn-primary-ghost" 
+              @click="handleSelectTdxPath"
+            >
+              选择目录
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
     <section class="setting-section">
       <h3 class="section-title">高级</h3>
 
@@ -156,11 +188,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useAppStore } from '@/stores'
 import { log } from '@/utils/logger'
+import { useMessage } from 'naive-ui'
 
 const appStore = useAppStore()
+const message = useMessage()
+const isTesting = ref(false)
 
 const settings = computed(() => appStore.settings)
 
@@ -218,6 +253,19 @@ async function handleLoginItemChange(e: Event) {
   } catch (err) {
     log.error(err)
     alert('设置开机自启失败')
+  }
+}
+
+async function handleSelectTdxPath() {
+  try {
+    const path = await window.electronAPI.app.selectDirectory()
+    if (path) {
+      updateSettings({ tdxPath: path })
+      message.success('已选择路径')
+    }
+  } catch (err) {
+    log.error('[Settings] 选择目录失败:', err)
+    message.error('选择目录失败')
   }
 }
 
@@ -438,6 +486,53 @@ function handleReset() {
 
 .toggle input:checked + .toggle-track::after {
   transform: translateX(18px);
+}
+
+/* 输入框组合 */
+.input-action-wrap {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  max-width: 400px;
+}
+
+.text-input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.text-input:focus {
+  border-color: var(--primary-color);
+  background: var(--bg-primary);
+}
+
+.btn-primary-ghost {
+  padding: 6px 12px;
+  border-radius: var(--border-radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--primary-color);
+  background: transparent;
+  color: var(--primary-color);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.btn-primary-ghost:hover:not(:disabled) {
+  background: var(--primary-bg);
+}
+
+.btn-primary-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* 危险按钮 */

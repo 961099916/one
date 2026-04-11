@@ -54,10 +54,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('db:sync-stock-pool', params),
     batchSyncXuanguBao: (params: { startDate: string, endDate: string, force?: boolean }) =>
       ipcRenderer.invoke('db:batch-sync-xuangubao', params),
-    getSurgePlates: (date: string) => ipcRenderer.invoke('db:get-surge-plates', date),
-    getSurgeStocks: (date: string) => ipcRenderer.invoke('db:get-surge-stocks', date),
+    getSurgePlates: (params: { date: string, timestamp?: number }) => 
+      ipcRenderer.invoke('db:get-surge-plates', params),
+    getSurgeStocks: (params: { date: string, timestamp?: number }) => 
+      ipcRenderer.invoke('db:get-surge-stocks', params),
     syncSurgeData: (date: string) => ipcRenderer.invoke('db:sync-surge-data', date),
     getLatestSurgeTimestamp: (date: string) => ipcRenderer.invoke('db:get-latest-surge-timestamp', date),
+    getSurgeTimestamps: (date: string) => ipcRenderer.invoke('db:get-surge-timestamps', date),
+    getSurgeHistoricalDates: () => ipcRenderer.invoke('db:get-surge-historical-dates'),
   },
 
   // ---------- 配置操作（electron-store via 主进程） ----------
@@ -90,6 +94,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     relaunch: () => ipcRenderer.invoke('app:relaunch'),
     setLoginItem: (enabled: boolean) => ipcRenderer.invoke('app:set-login-item', enabled),
     getLoginItem: () => ipcRenderer.invoke('app:get-login-item'),
+    proxyFetch: (url: string) => ipcRenderer.invoke('app:proxy-fetch', url),
+    selectDirectory: () => ipcRenderer.invoke('app:select-directory'),
   },
 
   // ---------- 自动更新 ----------
@@ -114,5 +120,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     offStatus: () => {
       ipcRenderer.removeAllListeners('update:status')
     },
+  },
+
+  // ---------- 通达信本地数据 ----------
+  tdx: {
+    getMinuteData: (params: { tdxPath: string; symbol: string; date: string; period?: '1' | '5' }) =>
+      ipcRenderer.invoke('tdx:get-minute-data', params),
+    openStock: (symbol: string) =>
+      ipcRenderer.invoke('tdx:open-stock', symbol),
   },
 })

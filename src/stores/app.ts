@@ -34,6 +34,7 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
   fontSize: 14,
   sidebarWidth: 260,
   autoLoadModel: false,
+  tdxPath: '',
 }
 
 export const useAppStore = defineStore(
