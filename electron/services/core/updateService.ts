@@ -129,7 +129,8 @@ export class UpdateService {
    */
   quitAndInstall(): void {
     log.info('[UpdateService] 退出并安装更新...')
-    autoUpdater.quitAndInstall()
+    // 参数说明: isSilent=false, isForceRunAfter=true (确保安装后立即重启)
+    autoUpdater.quitAndInstall(false, true)
   }
 
   /**
