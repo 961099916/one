@@ -275,28 +275,57 @@ export function initDbHandlers(): void {
   
   /** 获取全量情绪周期数据 */
   ipcMain.handle(IpcChannel.DB_GET_SENTIMENT_CYCLE, async (_event, params: { limit?: number } = {}) => {
-    const { limit = 15 } = params
+    const { limit = 20 } = params
     log.info(`[IPC] 调用 DB_GET_SENTIMENT_CYCLE, limit: ${limit}`)
     
     try {
-      // 1. 获取最近的交易日列表
-      const days = tradingDayOps.getLatestTradingDays(limit)
-      if (days.length === 0) return { days: [], matrix: [], stats: [] }
+      // 1. 获取最近的交易日列表 (为了计算晋级率和收益率，多取 1 天)
+      const days = tradingDayOps.getLatestTradingDays(limit + 1)
+      if (days.length === 0) return { days: [], stats: [], poolRecords: [], tdxStats: {}, marketOverview: {} }
       
       const dateList = days.map(d => d.date)
       const startDate = dateList[dateList.length - 1]
       const endDate = dateList[0]
 
-      // 2. 获取这些日期的市场指标
-      const stats = marketDataOps.getByDateRange(startDate, endDate)
+      // 2. 获取每日汇总市场指标 (修复抓取早盘记录的问题)
+      const stats = marketDataOps.getDailySummary(startDate, endDate)
       
-      // 3. 获取这些日期的涨停简况
+      // 3. 获取涨停池记录
       const poolRecords = stockPoolOps.getLatestPoolRecordsByDates('limit_up', dateList)
+      
+      // 4. 获取通达信数据 (成交额, 大平涨幅, 以及深度指标)
+      let tdxStats = {}
+      let marketOverview = {}
+      
+      try {
+        const tdxPath = appConfigOps.get('tdxPath' as any)
+        if (tdxPath) {
+          const tdxService = require('../../services/integration/tdxService').TdxService.getInstance()
+          
+          // 获取大盘成交额与上证涨幅
+          tdxStats = await tdxService.getIndicesStats(tdxPath, limit + 1)
+          
+          // 准备昨日涨停股用于计算今日收益率
+          const yesterdayLimitUps: Record<string, string[]> = {}
+          dateList.forEach(date => {
+            yesterdayLimitUps[date] = poolRecords
+              .filter(p => p.date === date)
+              .map(p => p.symbol)
+          })
+
+          // 全市场扫描 (大肉/大面/收益率)
+          marketOverview = await tdxService.getMarketOverview(tdxPath, dateList, yesterdayLimitUps)
+        }
+      } catch (err) {
+        log.warn('[DB IPC] 获取通达信指标失败，跳过:', err)
+      }
       
       return {
         days: dateList,
         stats,
-        poolRecords
+        poolRecords,
+        tdxStats,
+        marketOverview
       }
     } catch (err) {
       log.error('[DB IPC] get-sentiment-cycle 失败:', err)

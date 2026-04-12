@@ -5,7 +5,6 @@ import type { Component } from 'vue'
 import {
   HomeOutline,
   ChatboxOutline,
-  SettingsOutline,
   CubeOutline,
   OptionsOutline,
   InformationCircleOutline,
@@ -15,7 +14,6 @@ import {
   ListOutline,
   FlashOutline,
   TrendingDownOutline,
-  TrendingUpOutline,
   HeartOutline,
 } from '@vicons/ionicons5'
 import { RoutePath } from '@/constants'
@@ -26,11 +24,10 @@ export interface MenuItem {
   icon?: Component
   hidden?: boolean
   order?: number
-  children?: MenuItem[]
 }
 
 /**
- * 基础菜单配置
+ * 基础菜单配置 - 全部扁平化
  */
 export const menuConfig: MenuItem[] = [
   {
@@ -46,99 +43,76 @@ export const menuConfig: MenuItem[] = [
     order: 2,
   },
   {
-    path: RoutePath.MARKET_DATA,
-    title: '市场数据',
+    path: RoutePath.XUANGUBAO_INDICATOR,
+    title: '涨跌管理',
     icon: BarChartOutline,
-    order: 3,
-    hidden: true // 迁移至选股通管理下，隐藏旧入口
+    order: 10,
   },
   {
-    path: RoutePath.XUANGUBAO,
-    title: '选股通管理',
-    icon: OptionsOutline, // 使用 OptionsOutline 作为父级图标
-    order: 4,
-    children: [
-      {
-        path: 'indicator',
-        title: '涨跌数据管理',
-        icon: BarChartOutline,
-        order: 1,
-      },
-      {
-        path: 'calendar',
-        title: '交易日历管理',
-        icon: InformationCircleOutline,
-        order: 2,
-      },
-      {
-        path: 'limit-up',
-        title: '涨停池分析',
-        icon: Analytics,
-        order: 3,
-      },
-      {
-        path: 'limit-up-broken',
-        title: '炸板池分析',
-        icon: CloseCircleOutline,
-        order: 4,
-      },
-      {
-        path: 'yesterday-limit-up',
-        title: '昨日涨停池分析',
-        icon: ListOutline,
-        order: 5,
-      },
-      {
-        path: 'strong-stock',
-        title: '强势股分析',
-        icon: FlashOutline,
-        order: 6,
-      },
-      {
-        path: 'limit-down',
-        title: '跌停池分析',
-        icon: TrendingDownOutline,
-        order: 7,
-      },
-      {
-        path: 'surge-review',
-        title: '热点深度复盘',
-        icon: Analytics,
-        order: 9,
-      },
-      {
-        path: 'sentiment-cycle',
-        title: '情绪周期表',
-        icon: HeartOutline,
-        order: 10,
-      }
-    ]
+    path: RoutePath.XUANGUBAO_CALENDAR,
+    title: '交易日历',
+    icon: InformationCircleOutline,
+    order: 11,
   },
   {
-    path: RoutePath.SETTINGS,
-    title: '设置',
-    icon: SettingsOutline,
-    order: 5,
-    children: [
-      {
-        path: 'model',
-        title: '模型管理',
-        icon: CubeOutline,
-        order: 1,
-      },
-      {
-        path: 'app',
-        title: '通用设置',
-        icon: OptionsOutline,
-        order: 2,
-      },
-      {
-        path: 'about',
-        title: '关于',
-        icon: InformationCircleOutline,
-        order: 3,
-      },
-    ],
+    path: RoutePath.XUANGUBAO_LIMIT_UP,
+    title: '涨停分析',
+    icon: Analytics,
+    order: 12,
+  },
+  {
+    path: RoutePath.XUANGUBAO_LIMIT_UP_BROKEN,
+    title: '炸板分析',
+    icon: CloseCircleOutline,
+    order: 13,
+  },
+  {
+    path: RoutePath.XUANGUBAO_YESTERDAY_LIMIT_UP,
+    title: '昨日涨停',
+    icon: ListOutline,
+    order: 14,
+  },
+  {
+    path: RoutePath.XUANGUBAO_STRONG_STOCK,
+    title: '强势个股',
+    icon: FlashOutline,
+    order: 15,
+  },
+  {
+    path: RoutePath.XUANGUBAO_LIMIT_DOWN,
+    title: '跌停分析',
+    icon: TrendingDownOutline,
+    order: 16,
+  },
+  {
+    path: RoutePath.XUANGUBAO_SURGE_REVIEW,
+    title: '热点复盘',
+    icon: Analytics,
+    order: 17,
+  },
+  {
+    path: '/xuangubao/sentiment-cycle',
+    title: '情绪周期',
+    icon: HeartOutline,
+    order: 18,
+  },
+  {
+    path: RoutePath.SETTINGS_MODEL,
+    title: '模型管理',
+    icon: CubeOutline,
+    order: 30,
+  },
+  {
+    path: RoutePath.SETTINGS_APP,
+    title: '通用设置',
+    icon: OptionsOutline,
+    order: 31,
+  },
+  {
+    path: RoutePath.ABOUT,
+    title: '关于应用',
+    icon: InformationCircleOutline,
+    order: 32,
   },
 ]
 
@@ -152,11 +126,10 @@ export function getMenuRoutes(): MenuItem[] {
 }
 
 /**
- * 获取设置页面子菜单
+ * 获取设置页面子菜单（用于设置布局页面内导航）
  */
 export function getSettingsMenuRoutes(): MenuItem[] {
-  const settingsRoute = menuConfig.find(r => r.path === RoutePath.SETTINGS)
-  return (settingsRoute?.children || [])
-    .filter(route => !route.hidden)
+  return menuConfig
+    .filter(route => route.path.startsWith('/settings/') && !route.hidden)
     .sort((a, b) => (a.order || 999) - (b.order || 999))
 }

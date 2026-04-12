@@ -24,6 +24,25 @@ export const marketDataRepository = {
   },
 
   /**
+   * 获取每日最后一条市场数据记录（汇总数据）
+   */
+  getDailySummary(startDate: string, endDate: string): MarketDataRow[] {
+    const db = getDB()
+    const stmt = db.prepare(`
+      SELECT * FROM market_data 
+      WHERE date >= ? AND date <= ? 
+      AND (date, timestamp) IN (
+        SELECT date, MAX(timestamp) 
+        FROM market_data 
+        WHERE date >= ? AND date <= ? 
+        GROUP BY date
+      )
+      ORDER BY date DESC
+    `)
+    return stmt.all(startDate, endDate, startDate, endDate) as MarketDataRow[]
+  },
+
+  /**
    * 获取所有市场分时数据（按时间戳升序）
    */
   getAll(): MarketDataRow[] {

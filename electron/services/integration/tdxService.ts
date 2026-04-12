@@ -14,6 +14,22 @@ export interface TdxMinuteData {
   volume: number
 }
 
+export interface TdxDayData {
+  date: string // YYYY-MM-DD
+  open: number
+  high: number
+  low: number
+  close: number
+  amount: number
+  volume: number
+}
+
+export interface MarketOverview {
+  bigMeat: number // 涨幅 > 10%
+  bigFace: number // 跌幅 > 10%
+  profitAvg: number // 昨日涨停今日平均收益
+}
+
 export class TdxService {
   private static instance: TdxService
 
@@ -25,140 +41,204 @@ export class TdxService {
   }
 
   /**
-   * 读取通达信分时数据 (.lc5 或 .lc1)
-   * @param tdxPath 通达信 vipdoc 目录路径
-   * @param symbol 股票代码 (如 SH600519)
-   * @param date 目标日期 (YYYY-MM-DD)
-   * @param period 周期: '1' 为 1分钟, '5' 为 5分钟
+   * 鲁棒的路径解析：自动识别通达信根目录或 vipdoc 目录
    */
-  async getMinuteData(
-    tdxPath: string,
-    symbol: string,
-    date: string,
-    period: '1' | '5' = '5'
-  ): Promise<TdxMinuteData[]> {
+  private resolveVipdocPath(basePath: string): string {
+    if (!basePath) return ''
     try {
-      if (!tdxPath) {
-        throw new Error('未配置通达信路径')
-      }
-
-      // 1. 确定文件路径
-      // 符号处理: SH600519 -> sh, 600519
-      const market = symbol.substring(0, 2).toLowerCase() // sh or sz
-      const code = symbol.substring(2)
-      const fileName = `${market}${code}.${period === '1' ? 'lc1' : 'lc5'}`
-      const filePath = path.join(tdxPath, market, 'fzline', fileName)
-
-      log.info(`${LogTags.TDX} 正在读取文件: ${filePath}, 目标日期: ${date}`)
-
-      if (!fs.existsSync(filePath)) {
-        log.warn(`${LogTags.TDX} 文件不存在: ${filePath}`)
-        return []
-      }
-
-      // 2. 读取文件并解析
-      const buffer = fs.readFileSync(filePath)
-      const recordSize = 32
-      const results: TdxMinuteData[] = []
-
-      // 目标日期的编码
-      const [targetY, targetM, targetD] = date.split('-').map(Number)
-
-      // 计算两种可能的日期编码
-      const targetDateCode1 = (targetY - 2004) * 2048 + targetM * 100 + targetD
-      const targetDateCode2 = ((targetY - 2004) << 9) | (targetM << 5) | targetD
-      const targetDateCode = Math.max(targetDateCode1, targetDateCode2)
-
-      log.info(`${LogTags.TDX} 目标日期: ${date}, 编码1: ${targetDateCode1}, 编码2: ${targetDateCode2}`)
-      log.info(`${LogTags.TDX} 文件大小: ${buffer.length} 字节, 记录数: ${buffer.length / recordSize}`)
-
-      // 调试：打印第一条记录
-      if (buffer.length >= recordSize) {
-        const rawDate = buffer.readUInt16LE(0)
-        log.info(`${LogTags.TDX} 文件第一条记录原始日期代码: ${rawDate}`)
-      }
-
-      for (let i = 0; i < buffer.length; i += recordSize) {
-        if (i + recordSize > buffer.length) break
-
-        const dateCode = buffer.readUInt16LE(i)
-
-        // 匹配任意一种编码
-        if (dateCode === targetDateCode1 || dateCode === targetDateCode2) {
-          const timeCode = buffer.readUInt16LE(i + 2)
-          const open = buffer.readFloatLE(i + 4)
-          const high = buffer.readFloatLE(i + 8)
-          const low = buffer.readFloatLE(i + 12)
-          const close = buffer.readFloatLE(i + 16)
-          const amount = buffer.readFloatLE(i + 20)
-          const volume = buffer.readInt32LE(i + 24)
-
-          // 转换时间代码 (minutes from 00:00) 为 HH:mm
-          const hour = Math.floor(timeCode / 60)
-          const minute = timeCode % 60
-          const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
-
-          results.push({
-            time: `${date} ${timeStr}`,
-            open,
-            high,
-            low,
-            close,
-            amount,
-            volume
-          })
-        } else if (dateCode > targetDateCode) {
-          // 由于文件通常是按时间排序的，如果当前日期已经超过目标日期，可以提前停止（可选）
-          // 但为了保险（考虑到有些文件可能不是严格有序），我们继续扫描或者根据具体情况优化
-          // 这里简单处理，继续扫描所有记录，或者如果确定是有序的就 break
-          // TDX 数据文件通常是有序的
-          // break 
-        }
-      }
-
-      log.info(`${LogTags.TDX} 解析完成，找到 ${results.length} 条记录`)
-      return results
-    } catch (err) {
-      log.error(`${LogTags.TDX} 获取分时数据失败:`, err)
-      throw err
+      // 如果路径本身就是 vipdoc 或以此结尾，直接返回
+      if (basePath.toLowerCase().endsWith('vipdoc')) return basePath
+      
+      // 尝试在当前目录下找 vipdoc
+      const possibleVipdoc = path.join(basePath, 'vipdoc')
+      if (fs.existsSync(possibleVipdoc)) return possibleVipdoc
+      
+      // 返回原始路径，让后续的 exists 检查逻辑处理
+      return basePath
+    } catch {
+      return basePath
     }
   }
 
   /**
-   * 唤起通达信并跳转到指定股票
-   * @param symbol 股票代码 (如 SH600519)
+   * 查找日线文件（兼容大小写）
    */
-  async openStock(symbol: string): Promise < { success: boolean; error?: string } > {
-      try {
-        log.info(`${LogTags.TDX} 尝试唤起通达信: ${symbol}`)
+  private findDayFile(vipdocPath: string, market: string, fileName: string): string | null {
+    const ldayPath = path.join(vipdocPath, market.toLowerCase(), 'lday')
+    if (!fs.existsSync(ldayPath)) return null
 
-      // 通达信 URL Scheme (根据常见配置)
-      // 尝试常用的几种协议，由系统分发
-      const schemes = ['tdx', 'newtdx', 'tdxw']
-      let lastError: Error | null = null
+    // 直接尝试全小写拼接
+    const fullPath = path.join(ldayPath, fileName.toLowerCase())
+    if (fs.existsSync(fullPath)) return fullPath
 
-      for(const scheme of schemes) {
-          try {
-            // 去掉前缀（如 SH600519 -> 600519）或者直接使用 symbol，取决于协议要求
-            // 多数通达信协议支持带市场前缀或纯代码
-            const code = symbol.replace(/[^0-9]/g, '')
-            const url = `${scheme}://${code}`
-            log.info(`${LogTags.TDX} 尝试唤起协议: ${url}`)
-            await shell.openExternal(url)
-            return { success: true }
-          } catch (err) {
-            lastError = err as Error
-            continue
-          }
-        }
-      
-      throw lastError || new Error('未找到可用的通达信协议')
-      } catch(err) {
-        log.error(`${LogTags.TDX} 唤起通达信失败:`, err)
-        return {
-          success: false,
-          error: err instanceof Error ? err.message : '无法打开通达信'
-        }
-      }
+    // 尝试大写
+    const upperPath = path.join(ldayPath, fileName.toUpperCase())
+    if (fs.existsSync(upperPath)) return upperPath
+
+    // 目录扫描（最慢但最稳）
+    try {
+      const files = fs.readdirSync(ldayPath)
+      const target = fileName.toLowerCase()
+      const found = files.find(f => f.toLowerCase() === target)
+      return found ? path.join(ldayPath, found) : null
+    } catch {
+      return null
     }
   }
+
+  /**
+   * 读取分时数据
+   */
+  async getMinuteData(params: { tdxPath: string, symbol: string, date: string, period?: '1' | '5' }): Promise<TdxMinuteData[]> {
+    const { tdxPath, symbol, date, period = '5' } = params
+    try {
+      const vipdocPath = this.resolveVipdocPath(tdxPath)
+      const market = symbol.substring(0, 2).toLowerCase()
+      const code = symbol.substring(2)
+      const fileName = `${market}${code}.${period === '1' ? 'lc1' : 'lc5'}`
+      const filePath = path.join(vipdocPath, market, 'fzline', fileName)
+
+      if (!fs.existsSync(filePath)) return []
+
+      const buffer = fs.readFileSync(filePath)
+      const recordSize = 32
+      const results: TdxMinuteData[] = []
+      const [targetY, targetM, targetD] = date.split('-').map(Number)
+      const targetDateCode1 = (targetY - 2004) * 2048 + targetM * 100 + targetD
+      const targetDateCode2 = ((targetY - 2004) << 9) | (targetM << 5) | targetD
+
+      for (let i = 0; i < buffer.length; i += recordSize) {
+        const dateCode = buffer.readUInt16LE(i)
+        if (dateCode === targetDateCode1 || dateCode === targetDateCode2) {
+          const timeCode = buffer.readUInt16LE(i + 2)
+          const timeStr = `${Math.floor(timeCode/60).toString().padStart(2, '0')}:${(timeCode%60).toString().padStart(2, '0')}`
+          results.push({
+            time: `${date} ${timeStr}`,
+            open: buffer.readFloatLE(i + 4),
+            high: buffer.readFloatLE(i + 8),
+            low: buffer.readFloatLE(i + 12),
+            close: buffer.readFloatLE(i + 16),
+            amount: buffer.readFloatLE(i + 20),
+            volume: buffer.readInt32LE(i + 24)
+          })
+        }
+      }
+      return results
+    } catch { return [] }
+  }
+
+  async openStock(symbol: string) {
+    const code = symbol.replace(/[^0-9]/g, '')
+    await shell.openExternal(`tdx://${code}`).catch(() => {})
+    return { success: true }
+  }
+
+  async getDayData(tdxPath: string, symbol: string, limit: number = 30): Promise<TdxDayData[]> {
+    const vipdocPath = this.resolveVipdocPath(tdxPath)
+    const market = symbol.substring(0, 2)
+    const fileName = `${symbol.toLowerCase()}.day`
+    const filePath = this.findDayFile(vipdocPath, market, fileName)
+
+    if (!filePath) return []
+    const buffer = fs.readFileSync(filePath)
+    const recordSize = 32
+    const count = Math.floor(buffer.length / recordSize)
+    const results: TdxDayData[] = []
+    for (let i = Math.max(0, count - limit); i < count; i++) {
+        const offset = i * recordSize
+        const rawDate = buffer.readUInt32LE(offset)
+        const dateStr = rawDate.toString()
+        results.push({
+          date: `${dateStr.substring(0,4)}-${dateStr.substring(4,6)}-${dateStr.substring(6,8)}`,
+          open: buffer.readUInt32LE(offset + 4) / 100,
+          high: buffer.readUInt32LE(offset + 8) / 100,
+          low: buffer.readUInt32LE(offset + 12) / 100,
+          close: buffer.readUInt32LE(offset + 16) / 100,
+          amount: buffer.readFloatLE(offset + 20),
+          volume: buffer.readUInt32LE(offset + 24)
+        })
+    }
+    return results
+  }
+
+  async getIndicesStats(tdxPath: string, limit: number = 30) {
+    const shData = await this.getDayData(tdxPath, 'SH000001', limit + 1)
+    const szData = await this.getDayData(tdxPath, 'SZ399001', limit + 1)
+    const stats: Record<string, { turnover: number, changePercent: number }> = {}
+    const szMap = new Map(szData.map(d => [d.date, d]))
+
+    shData.forEach((sh, idx) => {
+      const sz = szMap.get(sh.date)
+      if (!sz) return
+      let cp = 0
+      if (idx > 0) {
+          const prev = shData[idx - 1]
+          if (prev.close) cp = (sh.close - prev.close) / prev.close
+      }
+      stats[sh.date] = { turnover: (sh.amount + sz.amount) * 10000, changePercent: cp }
+    })
+    return stats
+  }
+
+  async getMarketOverview(tdxPath: string, dates: string[], yesterdayLimitUps: Record<string, string[]>) {
+    const results: Record<string, MarketOverview> = {}
+    dates.forEach(d => results[d] = { bigMeat: 0, bigFace: 0, profitAvg: 0 })
+
+    const vipdocPath = this.resolveVipdocPath(tdxPath)
+    if (!fs.existsSync(vipdocPath)) return results
+
+    const markets = ['sh', 'sz']
+    const recordSize = 32
+
+    for (const m of markets) {
+      const ldayPath = path.join(vipdocPath, m, 'lday')
+      if (!fs.existsSync(ldayPath)) continue
+      const files = fs.readdirSync(ldayPath).filter(f => f.toLowerCase().endsWith('.day'))
+      
+      for (const f of files) {
+        try {
+          const fPath = path.join(ldayPath, f)
+          const stats = fs.statSync(fPath)
+          if (stats.size < recordSize * 2) continue
+          const symbol = m.toUpperCase() + f.split('.')[0].replace(/[^0-9]/g, '')
+          
+          const fd = fs.openSync(fPath, 'r')
+          const buffer = Buffer.alloc(recordSize * (dates.length + 2))
+          const readSize = Math.min(stats.size, buffer.length)
+          fs.readSync(fd, buffer, 0, readSize, stats.size - readSize)
+          fs.closeSync(fd)
+
+          const fileRecords: TdxDayData[] = []
+          for (let i = 0; i < readSize; i += recordSize) {
+            const rawDate = buffer.readUInt32LE(i)
+            const ds = rawDate.toString()
+            fileRecords.push({
+              date: `${ds.substring(0,4)}-${ds.substring(4,6)}-${ds.substring(6,8)}`,
+              open: buffer.readUInt32LE(i+4)/100, high: buffer.readUInt32LE(i+8)/100, low: buffer.readUInt32LE(i+12)/100,
+              close: buffer.readUInt32LE(i+16)/100, amount: buffer.readFloatLE(i+20), volume: buffer.readUInt32LE(i+24)
+            })
+          }
+
+          dates.forEach((date, di) => {
+            const curIdx = fileRecords.findIndex(r => r.date === date)
+            if (curIdx > 0) {
+              const cur = fileRecords[curIdx], pre = fileRecords[curIdx-1]
+              if (!pre.close) return
+              const chg = (cur.close - pre.close) / pre.close
+              if (chg >= 0.098) results[date].bigMeat++
+              if (chg <= -0.098) results[date].bigFace++
+              const prevDate = dates[di+1]
+              if (prevDate && yesterdayLimitUps[prevDate]?.includes(symbol)) results[date].profitAvg += chg
+            }
+          })
+        } catch(e) {}
+      }
+    }
+
+    dates.forEach((d, i) => {
+      const pd = dates[i+1], count = yesterdayLimitUps[pd]?.length || 0
+      if (count > 0) results[d].profitAvg /= count
+    })
+    return results
+  }
+}

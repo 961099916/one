@@ -32,27 +32,14 @@ const menuOptions = computed<MenuOption[]>(() => {
 
 /** 当前激活的菜单项 Key */
 const activeKey = computed(() => {
-  // 处理嵌套路由的激活状态
   const path = route.path
   if (path === '/') return '/'
-
-  // 查匹配的顶级或二级菜单路径
-  const findActiveKey = (items: MenuItem[]): string | undefined => {
-    for (const item of items) {
-      if (item.path === path) return item.path
-      if (item.children) {
-        // 子路由路径拼接：父路径/子路径
-        const childMatch = item.children.find(c => {
-          const fullPath = item.path.endsWith('/') ? item.path + c.path : `${item.path}/${c.path}`
-          return path === fullPath || path.startsWith(fullPath + '/')
-        })
-        if (childMatch) return item.path.endsWith('/') ? item.path + childMatch.path : `${item.path}/${childMatch.path}`
-      }
-    }
-    return undefined
-  }
-
-  return findActiveKey(menuRoutes.value) || path
+  
+  // 查找匹配的菜单项
+  const match = menuRoutes.value.find(item => 
+    path === item.path || path.startsWith(item.path + '/')
+  )
+  return match?.path || path
 })
 
 function renderIcon(icon: any) {
@@ -61,25 +48,11 @@ function renderIcon(icon: any) {
 
 function mapMenuRoutesToOptions(routes: MenuItem[]): MenuOption[] {
   return routes.map((item: MenuItem) => {
-    const hasChildren = item.children && item.children.length > 0
-
-    const option: MenuOption = {
-      label: hasChildren
-        ? item.title
-        : () => h(RouterLink, { to: item.path } as any, { default: () => item.title }),
+    return {
+      label: () => h(RouterLink, { to: item.path } as any, { default: () => item.title }),
       key: item.path,
       icon: item.icon ? renderIcon(item.icon) : undefined,
     }
-
-    if (hasChildren && item.children) {
-      option.children = item.children.map(child => ({
-        label: () => h(RouterLink, { to: `${item.path}/${child.path}` } as any, { default: () => child.title }),
-        key: `${item.path}/${child.path}`,
-        icon: child.icon ? renderIcon(child.icon) : undefined,
-      }))
-    }
-
-    return option
   })
 }
 

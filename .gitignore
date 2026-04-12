@@ -50,3 +50,4 @@ coverage
 # Auto-generated type declarations
 src/auto-imports.d.ts
 src/components.d.ts
+*.sqlite

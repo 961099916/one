@@ -62,6 +62,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getLatestSurgeTimestamp: (date: string) => ipcRenderer.invoke('db:get-latest-surge-timestamp', date),
     getSurgeTimestamps: (date: string) => ipcRenderer.invoke('db:get-surge-timestamps', date),
     getSurgeHistoricalDates: () => ipcRenderer.invoke('db:get-surge-historical-dates'),
+    getSentimentCycle: (params: unknown) => ipcRenderer.invoke('db:get-sentiment-cycle', params),
   },
 
   // ---------- 配置操作（electron-store via 主进程） ----------

@@ -45,6 +45,9 @@ export interface AppConfig {
 
   // 聊天设置
   currentSessionId: string
+
+  // 数据源设置
+  tdxPath: string
 }
 
 // ==================== 默认配置 ====================
@@ -75,6 +78,7 @@ const defaultConfig: AppConfig = {
   activeModel: '',
   generationParams: DEFAULT_GENERATION_PARAMS,
   currentSessionId: '',
+  tdxPath: '',
 }
 
 // ==================== Store 实例 ====================

@@ -102,5 +102,27 @@ export const stockPoolRepository = {
       ORDER BY date DESC, board_count DESC, last_limit_up_time ASC
     `)
     return stmt.all(poolName, ...dates) as StockPoolRow[]
+  },
+
+  /**
+   * 获取指定日期范围内，最高连板高度 >= minBoard 的所有个股及其核心信息
+   */
+  getHighBoardStocksByDateRange(dates: string[], minBoard: number): Array<{ symbol: string, stock_name: string, reason_info: string, max_board: number }> {
+    if (dates.length === 0) return []
+    const db = getDB()
+    const placeholders = dates.map(() => '?').join(',')
+    const stmt = db.prepare(`
+      SELECT 
+        symbol, 
+        stock_name, 
+        reason_info,
+        MAX(board_count) as max_board
+      FROM stock_pool_data 
+      WHERE date IN (${placeholders}) AND pool_name = 'limit_up'
+      GROUP BY symbol
+      HAVING max_board >= ?
+      ORDER BY max_board DESC, last_limit_up_time ASC
+    `)
+    return stmt.all(...dates, minBoard) as any[]
   }
 }

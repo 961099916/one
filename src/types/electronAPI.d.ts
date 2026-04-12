@@ -98,6 +98,8 @@ export interface ElectronAPI {
     relaunch: () => Promise<void>
     setLoginItem: (enabled: boolean) => Promise<{ success: boolean }>
     getLoginItem: () => Promise<boolean>
+    proxyFetch: (url: string) => Promise<any>
+    selectDirectory: () => Promise<string | null>
   }
 
   // 自动更新
@@ -113,6 +115,12 @@ export interface ElectronAPI {
       message?: string
     }) => void) => () => void
     offStatus: () => void
+  }
+
+  // 通达信本地数据
+  tdx: {
+    getMinuteData: (params: { tdxPath: string; symbol: string; date: string; period?: '1' | '5' }) => Promise<any>
+    openStock: (symbol: string) => Promise<void>
   }
 }
 

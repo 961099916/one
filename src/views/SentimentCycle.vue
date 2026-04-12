@@ -1,305 +1,431 @@
 <template>
-  <div class="sentiment-cycle-page">
-    <!-- 顶部状态栏 -->
-    <div class="sentiment-header">
-      <div class="header-left">
-        <h2 class="title">情绪周期分析矩阵</h2>
-        <n-text depth="3" class="subtitle">连板高度精细复盘 · 投机情绪体温计</n-text>
+  <div class="sentiment-cycle-container">
+    <div class="header">
+      <div class="title-section">
+        <h2 class="main-title">情绪周期分析矩阵</h2>
+        <div class="subtitle">两市成交热力 · 全市场大肉大面监测 · 连板梯队动能</div>
       </div>
-      <div class="header-right">
-        <n-space align="center">
-          <n-text depth="3">展示天数:</n-text>
-          <n-input-number v-model:value="displayLimit" size="small" :min="5" :max="40" style="width: 100px" @update:value="loadData(displayLimit)" />
+      <div class="actions">
+        <n-space align="center" :size="24">
+          <div v-if="!tdxPath" class="path-warning">
+            <n-alert title="未配置通达信路径" type="warning" size="small" :show-icon="false">
+              无法加载成交额等指标。 <n-button text type="warning" @click="goToSettings">前往设置</n-button>
+            </n-alert>
+          </div>
+          <div class="limit-setting">
+            <span class="label">展示深度:</span>
+            <n-input-number v-model:value="displayLimit" size="small" :min="10" :max="60" :step="5" style="width: 90px" @update:value="loadData(displayLimit)" />
+          </div>
           <n-button secondary type="info" :loading="loading" @click="loadData(displayLimit)">
             <template #icon><n-icon><RefreshOutline /></n-icon></template>
-            刷新数据
+            同步最新数据
           </n-button>
         </n-space>
       </div>
     </div>
 
-    <!-- 核心矩阵区域 -->
-    <div class="matrix-container" v-if="!loading || sentimentMatrix.length > 0">
-      <div class="matrix-scroll-area">
-        <div class="matrix-wrapper">
-          <!-- 每一列代表一天 -->
-          <div 
-            v-for="day in sentimentMatrix" 
-            :key="day.date" 
-            class="day-column"
-            :class="{ 'is-today': isToday(day.date) }"
-          >
-            <!-- 日期与核心指标 -->
-            <div class="column-header">
-              <div class="date-tag">{{ formatDate(day.date) }}</div>
-              <div class="sentiment-stats">
-                <div class="stat-item" :style="{ color: getTempColor(day.temperature) }">
-                  <span class="label">温度:</span>
-                  <span class="value">{{ day.temperature.toFixed(1) }}°</span>
-                </div>
-                <div class="stat-item">
-                  <span class="label">涨跌:</span>
-                  <span class="value">{{ (day.riseRatio * 100).toFixed(0) }}%</span>
-                </div>
-              </div>
-              <div class="dragon-info">
-                <span class="label">最高:</span>
-                <span class="dragon-name">{{ day.dragonStock }}</span>
-                <n-tag type="error" size="tiny" round>{{ day.maxBoard }}B</n-tag>
-              </div>
-            </div>
+    <div class="table-wrapper" v-if="sentimentMatrix.length > 0">
+      <table class="sentiment-table">
+        <thead>
+          <tr>
+            <th class="sticky-col">日期</th>
+            <th>两市成交额</th>
+            <th>上证涨跌</th>
+            <th>红/绿盘</th>
+            <th>涨停数</th>
+            <th>炸板率</th>
+            <th class="divider"></th>
+            <th class="meat-face">大肉(10%+)</th>
+            <th class="meat-face">大面(-10%+)</th>
+            <th>昨停收益</th>
+            <th class="divider"></th>
+            <th>1连板</th>
+            <th>2连板</th>
+            <th>3连板</th>
+            <th>4连板</th>
+            <th>5+连板</th>
+            <th class="divider"></th>
+            <th>1→2 晋级</th>
+            <th>2→3 晋级</th>
+            <th>3+ 晋级</th>
+            <th class="divider"></th>
+            <th class="sector-col">核心题材板块</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="day in sentimentMatrix" :key="day.date" :class="{ 'is-today': isToday(day.date) }">
+            <!-- 日期 -->
+            <td class="sticky-col date-cell">
+              {{ day.date.substring(5) }}
+              <div v-if="isToday(day.date)" class="today-tag">今日</div>
+            </td>
 
-            <!-- 连板梯队矩阵 -->
-            <div class="board-flow">
-              <!-- 按高度从高到低排列 -->
-              <div 
-                v-for="bCount in getBoardCounts(day.matrix)" 
-                :key="bCount" 
-                class="board-section"
-              >
-                <div class="board-label" :class="{ 'high-board': bCount >= 3 }">
-                  {{ bCount }}B
-                  <n-badge :value="day.matrix[bCount].length" type="error" :show="day.matrix[bCount].length > 1" />
-                </div>
-                <div class="stock-list">
-                  <div 
-                    v-for="stock in day.matrix[bCount]" 
-                    :key="stock.symbol" 
-                    class="stock-bubble"
-                    :style="getStockStyle(stock, bCount)"
-                    @click="handleStockClick(stock)"
-                  >
-                    {{ stock.stock_name }}
-                  </div>
+            <!-- 两市成交额 (TDX 修正万元单位) -->
+            <td :style="getHeatmapStyle(day.turnover, 'turnover')">
+              {{ formatAmount(day.turnover) }}
+            </td>
+
+            <!-- 大盘涨跌 (以上证指数为准) -->
+            <td :class="getPriceColor(day.indexChange || 0)">
+              {{ (day.indexChange! * 100).toFixed(2) }}%
+            </td>
+
+            <!-- 红绿盘 -->
+            <td class="counts-cell">
+              <span class="up">{{ day.riseCount }}</span>
+              <span class="sep">/</span>
+              <span class="down">{{ day.fallCount }}</span>
+            </td>
+
+            <!-- 涨停数 -->
+            <td :style="getHeatmapStyle(day.limitUpCount, 'limitUp')">
+              {{ day.limitUpCount }}
+            </td>
+
+            <!-- 炸板率 -->
+            <td :style="getHeatmapStyle(day.brokenRatio, 'broken')">
+              {{ (day.brokenRatio * 100).toFixed(1) }}%
+            </td>
+
+            <td class="divider"></td>
+
+            <!-- 大肉/大面 (全市场扫描结果) -->
+            <td class="meat-cell" :style="getHeatmapStyle(day.bigMeat, 'bigMeat')">
+              {{ day.bigMeat || 0 }}
+            </td>
+            <td class="face-cell" :style="getHeatmapStyle(day.bigFace, 'bigFace')">
+              {{ day.bigFace || 0 }}
+            </td>
+
+            <!-- 昨日涨停今日平均收益 -->
+            <td :class="getPriceColor(day.profitAvg || 0)" class="profit-cell">
+              {{ day.profitAvg !== undefined ? (day.profitAvg * 100).toFixed(2) + '%' : '-' }}
+            </td>
+
+            <td class="divider"></td>
+
+            <!-- 连板梯队 (1-5+) -->
+            <td v-for="b in [1, 2, 3, 4]" :key="b" :style="getLadderStyle(day.ladder[b], b)">
+              {{ day.ladder[b] || 0 }}
+            </td>
+            <td :style="getLadderStyle(getHighBoardCount(day.ladder), 5)">
+              {{ getHighBoardCount(day.ladder) }}
+            </td>
+
+            <td class="divider"></td>
+
+            <!-- 晋级率 (1->2, 2->3, 3+) -->
+            <td class="promotion-cell">
+              <div class="progress-bg" v-if="day.promotionRates[1] !== undefined">
+                <div class="progress-bar" :style="{ width: (day.promotionRates[1] * 100) + '%', backgroundColor: getPromotionColor(day.promotionRates[1]) }"></div>
+                <span class="label">{{ (day.promotionRates[1] * 100).toFixed(0) }}%</span>
+              </div>
+              <span v-else>-</span>
+            </td>
+            <td class="promotion-cell">
+              <div class="progress-bg" v-if="day.promotionRates[2] !== undefined">
+                <div class="progress-bar" :style="{ width: (day.promotionRates[2] * 100) + '%', backgroundColor: getPromotionColor(day.promotionRates[2]) }"></div>
+                <span class="label">{{ (day.promotionRates[2] * 100).toFixed(0) }}%</span>
+              </div>
+              <span v-else>-</span>
+            </td>
+            <td class="promotion-cell">
+              <div class="progress-bg" v-if="getMaxPromotion(day.promotionRates) !== undefined">
+                <div class="progress-bar" :style="{ width: (getMaxPromotion(day.promotionRates)! * 100) + '%', backgroundColor: getPromotionColor(getMaxPromotion(day.promotionRates)!) }"></div>
+                <span class="label">{{ (getMaxPromotion(day.promotionRates)! * 100).toFixed(0) }}%</span>
+              </div>
+              <span v-else>-</span>
+            </td>
+
+            <td class="divider"></td>
+
+            <!-- 题材板块 -->
+            <td class="sector-cell">
+              <div class="sector-tags">
+                <div v-for="sector in day.topSectors" :key="sector.name" class="sector-tag" :style="getSectorStyle(sector.count)">
+                  <span class="name">{{ sector.name }}</span>
+                  <span class="count">{{ sector.count }}</span>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- 加载与空状态 -->
-    <div v-if="loading && sentimentMatrix.length === 0" class="loading-state">
+    <div v-if="loading && sentimentMatrix.length === 0" class="state-container">
       <n-spin size="large" />
-      <n-text depth="3">正在生成情绪分析矩阵...</n-text>
+      <div class="state-text">正在扫描全量历史行情以聚合精准深度指标...</div>
     </div>
-    <n-empty v-else-if="sentimentMatrix.length === 0" description="暂无历史数据，请先同步选股通数据" class="empty-state">
+    
+    <n-empty v-else-if="sentimentMatrix.length === 0" class="state-container" description="暂无本地情绪数据，请确认已同步历史选股通数据并配置 TDX 路径">
       <template #extra>
-        <n-button type="primary" @click="goToMarketData">去同步数据</n-button>
+        <n-button type="primary" @click="goToMarketData">前往同步数据</n-button>
       </template>
     </n-empty>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
-  NText, NButton, NIcon, NTag, NInputNumber, NSpin, NEmpty, NSpace, NBadge, useMessage
+  NButton, NIcon, NInputNumber, NSpin, NEmpty, NSpace, useMessage, NAlert 
 } from 'naive-ui'
 import { RefreshOutline } from '@vicons/ionicons5'
 import { useSentimentCycle } from '@/composables/useSentimentCycle'
+import { useAppStore } from '@/stores'
 
 const router = useRouter()
 const message = useMessage()
-const displayLimit = ref(20)
+const appStore = useAppStore()
+const displayLimit = ref(25)
 const { loading, sentimentMatrix, loadData } = useSentimentCycle()
 
-const isToday = (date: string) => date === new Date().toLocaleDateString('sv')
-const formatDate = (date: string) => date.split('-').slice(1).join('-')
+const tdxPath = computed(() => appStore.settings.tdxPath)
 
-const getBoardCounts = (matrix: Record<number, any[]>) => {
-  return Object.keys(matrix).map(Number).sort((a, b) => b - a)
+onMounted(() => loadData(displayLimit.value))
+
+const goToSettings = () => router.push('/settings')
+
+const isToday = (date: string) => date === new Date().toISOString().split('T')[0]
+
+const formatAmount = (val?: number) => {
+  if (!val) return '-'
+  const bil = val / 100000000
+  return bil > 10000 ? (bil / 10000).toFixed(2) + '万亿' : bil.toFixed(0) + '亿'
 }
 
-const getTempColor = (temp: number) => {
-  if (temp > 80) return '#ef4444'
-  if (temp > 50) return '#f59e0b'
-  if (temp > 20) return '#3b82f6'
-  return '#64748b'
+const getPriceColor = (val: number) => {
+  if (val > 0) return 'text-red'
+  if (val < 0) return 'text-green'
+  return ''
 }
 
-const getStockStyle = (stock: any, bCount: number) => {
-  const intensity = Math.min(bCount / 5, 1)
+const getHeatmapStyle = (val: number | undefined, type: string) => {
+  if (val === undefined) return {}
+  let ratio = 0
+  if (type === 'turnover') {
+    // 假设 1万亿以上算热
+    ratio = Math.min(val / 1500000000000, 1)
+    return { backgroundColor: `rgba(239, 68, 68, ${ratio * 0.4})`, color: ratio > 0.6 ? '#fff' : 'inherit' }
+  }
+  if (type === 'limitUp') {
+    ratio = Math.min(val / 100, 1) // 100只涨停算疯狂
+    return { backgroundColor: `rgba(239, 68, 68, ${ratio * 0.8})`, color: ratio > 0.4 ? '#fff' : 'inherit' }
+  }
+  if (type === 'broken') {
+    ratio = Math.min(val, 0.5) // 50%炸板算地狱
+    return { backgroundColor: `rgba(34, 197, 94, ${ratio * 1.5})`, color: ratio > 0.3 ? '#fff' : 'inherit' }
+  }
+  if (type === 'bigMeat') {
+    ratio = Math.min(val / 50, 1) // 50只大肉算高潮
+    return { backgroundColor: `rgba(239, 68, 68, ${ratio * 0.3})` }
+  }
+  if (type === 'bigFace') {
+    ratio = Math.min(val / 50, 1) // 50只大面算极点
+    return { backgroundColor: `rgba(34, 197, 94, ${ratio * 0.3})` }
+  }
+  return {}
+}
+
+const getLadderStyle = (count: number | undefined, level: number) => {
+  if (!count) return { color: '#94a3b8', opacity: 0.3 }
+  const ratio = Math.min(count / (level === 1 ? 50 : level * 2), 1)
+  const baseColor = level >= 3 ? '239, 68, 68' : '59, 130, 246'
   return {
-    backgroundColor: bCount >= 3 ? `rgba(239, 68, 68, ${0.1 + intensity * 0.9})` : '#fff',
-    borderColor: bCount >= 3 ? '#ef4444' : '#e2e8f0',
-    color: bCount >= 3 ? (intensity > 0.4 ? '#fff' : '#ef4444') : '#1e293b',
-    fontWeight: bCount >= 2 ? 'bold' : 'normal'
+    backgroundColor: `rgba(${baseColor}, ${0.1 + ratio * 0.8})`,
+    color: ratio > 0.4 ? '#fff' : `rgb(${baseColor})`,
+    fontWeight: '800'
   }
 }
 
-const handleStockClick = (stock: any) => {
-  window.electronAPI.tdx.openStock(stock.symbol)
-  message.success(`已唤起通达信: ${stock.stock_name}`)
+const getHighBoardCount = (ladder: Record<number, number>) => {
+  return Object.entries(ladder)
+    .filter(([b]) => Number(b) >= 5)
+    .reduce((sum, [, count]) => sum + count, 0)
 }
 
-const goToMarketData = () => {
-  router.push('/market/data')
+const getPromotionColor = (rate: number) => {
+  if (rate > 0.5) return '#ef4444'
+  if (rate > 0.3) return '#f59e0b'
+  return '#3b82f6'
 }
 
-onMounted(() => loadData(displayLimit.value))
+const getMaxPromotion = (rates: Record<number, number>) => {
+  const keys = Object.keys(rates).map(Number).filter(k => k >= 3)
+  if (keys.length === 0) return undefined
+  return Math.max(...keys.map(k => rates[k]))
+}
+
+const getSectorStyle = (count: number) => {
+  const intensity = Math.min(count / 10, 1)
+  return {
+    backgroundColor: `rgba(239, 68, 68, ${0.05 + intensity * 0.2})`,
+    borderColor: `rgba(239, 68, 68, ${intensity * 0.5})`
+  }
+}
+
+const goToMarketData = () => router.push('/market/data')
 </script>
 
 <style scoped>
-.sentiment-cycle-page {
+.sentiment-cycle-container {
   height: 100%;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  background-color: #f8fafc;
-  padding: 24px;
+  background-color: #f1f5f9;
   overflow: hidden;
 }
 
-.sentiment-header {
-  padding: 0 12px 24px;
+.header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 24px;
+  padding: 0 8px;
 }
 
-.title {
+.main-title {
   margin: 0;
-  font-size: 24px;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: #0f172a;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.path-warning {
+  max-width: 300px;
+}
+
+/* 表格样式 */
+.table-wrapper {
+  flex: 1;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  overflow: auto;
+  border: 1px solid #e2e8f0;
+}
+
+.sentiment-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: center;
+}
+
+.sentiment-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  padding: 12px 8px;
   font-weight: 800;
+  color: #475569;
+  border-bottom: 2px solid #e2e8f0;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.sentiment-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid #f1f5f9;
+  white-space: nowrap;
+}
+
+.sentiment-table tr:hover {
+  background-color: #f8fafc;
+}
+
+/* 特殊列 */
+.sticky-col {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 5;
+  border-right: 2px solid #f1f5f9;
+}
+
+.date-cell {
+  font-weight: 900;
   color: #1e293b;
 }
 
-/* 矩阵区域 */
-.matrix-container {
-  flex: 1;
-  min-height: 0;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.matrix-scroll-area {
-  height: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-
-.matrix-wrapper {
-  display: flex;
-  height: 100%;
-  padding: 20px 40px;
-  min-width: fit-content;
-}
-
-.day-column {
-  width: 180px;
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  border-right: 1px dashed #e2e8f0;
-  padding: 0 12px;
-}
-
-.day-column.is-today {
-  background-color: #fffef0;
-}
-
-.column-header {
-  height: 120px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  border-bottom: 2px solid #f1f5f9;
-  margin-bottom: 16px;
-  flex-shrink: 0;
-}
-
-.date-tag {
-  font-size: 16px;
-  font-weight: 800;
-  color: #334155;
+.divider {
+  width: 4px;
+  padding: 0 !important;
   background: #f1f5f9;
-  padding: 4px 12px;
-  border-radius: 12px;
 }
 
-.sentiment-stats {
-  display: flex;
-  gap: 12px;
-  font-size: 11px;
-}
+.meat-cell { color: #ef4444; font-weight: bold; }
+.face-cell { color: #22c55e; font-weight: bold; }
+.profit-cell { font-weight: 900; }
 
-.dragon-info {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-}
+.text-red { color: #ef4444; font-weight: bold; }
+.text-green { color: #22c55e; font-weight: bold; }
 
-.dragon-name {
-  font-weight: 800;
-  color: #ef4444;
-}
+.counts-cell .up { color: #ef4444; font-weight: bold; }
+.counts-cell .down { color: #22c55e; font-weight: bold; }
+.counts-cell .sep { margin: 0 4px; color: #cbd5e1; }
 
-/* 连板流 */
-.board-flow {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-bottom: 20px;
-}
-
-.board-flow::-webkit-scrollbar {
-  width: 0; /* 隐藏滚动条但保留功能 */
-}
-
-.board-label {
-  font-size: 12px;
-  font-weight: 800;
-  color: #94a3b8;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.board-label.high-board {
-  color: #ef4444;
-}
-
-.stock-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.stock-bubble {
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 13px;
-  border: 1px solid #e2e8f0;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
+.promotion-cell { width: 80px; }
+.progress-bg {
+  height: 20px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  position: relative;
   overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.progress-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+}
+.progress-bg .label {
+  position: relative;
+  z-index: 1;
+  font-size: 10px;
+  font-weight: 900;
+  color: #334155;
 }
 
-.stock-bubble:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  z-index: 10;
+.sector-col { text-align: left !important; padding-left: 16px !important; }
+.sector-cell { text-align: left; padding-left: 16px; }
+.sector-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.sector-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+.sector-tag .name { font-weight: 800; font-size: 12px; }
+.sector-tag .count {
+  font-size: 10px;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 0 4px;
+  border-radius: 4px;
 }
 
-/* 状态 */
-.loading-state, .empty-state {
+.state-container {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 16px;
+  background: #fff;
 }
 </style>

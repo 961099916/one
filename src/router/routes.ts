@@ -137,7 +137,7 @@ export const baseRoutes: AppRouteRecordRaw[] = [
             meta: {
               title: '情绪周期表',
             },
-          }
+          },
         ]
       },
       {
