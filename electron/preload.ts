@@ -136,5 +136,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openStock: (symbol: string) =>
       ipcRenderer.invoke('open-tonghuashun-stock', symbol),
   },
+
+  // ---------- 窗口控制 ----------
+  window: {
+    minimize: () => ipcRenderer.invoke('window:minimize'),
+    maximize: () => ipcRenderer.invoke('window:maximize'),
+    unmaximize: () => ipcRenderer.invoke('window:unmaximize'),
+    close: () => ipcRenderer.invoke('window:close'),
+    isMaximized: () => ipcRenderer.invoke('window:is-maximized'),
+    setTitlebarColor: (color: string, symbolColor: string) => 
+      ipcRenderer.invoke('window:set-titlebar-color', { color, symbolColor }),
+  },
 })
 

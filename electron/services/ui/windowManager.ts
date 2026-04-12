@@ -17,8 +17,8 @@ export async function createMainWindow(): Promise<BrowserWindow> {
     show: false,
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
     titleBarOverlay: process.platform === 'win32' ? {
-      color: '#1a1a2e',
-      symbolColor: '#ffffff',
+      color: '#ffffff',
+      symbolColor: '#1f2329',
       height: 32
     } : undefined,
     backgroundColor: '#1a1a2e',

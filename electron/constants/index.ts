@@ -187,4 +187,12 @@ export const IpcChannel = {
   // 通达信本地数据
   TDX_GET_MINUTE_DATA: 'tdx:get-minute-data',
   TDX_OPEN_STOCK: 'tdx:open-stock',
+
+  // 窗口控制
+  WINDOW_MINIMIZE: 'window:minimize',
+  WINDOW_MAXIMIZE: 'window:maximize',
+  WINDOW_UNMAXIMIZE: 'window:unmaximize',
+  WINDOW_CLOSE: 'window:close',
+  WINDOW_IS_MAXIMIZED: 'window:is-maximized',
+  WINDOW_SET_TITLEBAR_COLOR: 'window:set-titlebar-color',
 } as const

@@ -1,5 +1,5 @@
 <template>
-  <header class="app-header glass-effect">
+  <header class="app-header glass-effect" :class="{ 'is-win32': isWin32 }">
     <div class="header-left">
       <n-breadcrumb class="breadcrumb-container">
         <n-breadcrumb-item @click="router.push('/')">首页</n-breadcrumb-item>
@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { NBreadcrumb, NBreadcrumbItem, NIcon, NButton, NTag } from 'naive-ui'
 import { MoonOutline, SunnyOutline } from '@vicons/ionicons5'
@@ -47,6 +47,7 @@ const emit = defineEmits<{
 
 const route = useRoute()
 const router = useRouter()
+const isWin32 = ref(false)
 
 const themeTitle = computed(() => (props.isDark ? '切换浅色模式' : '切换深色模式'))
 
@@ -57,6 +58,27 @@ const breadcrumbs = computed(() => {
     title: item.meta.title as string,
     path: item.path
   }))
+})
+
+onMounted(async () => {
+  if (window.electronAPI) {
+    const env = await window.electronAPI.app.getEnvInfo()
+    isWin32.value = env.platform === 'win32'
+    updateWCO()
+  }
+})
+
+function updateWCO() {
+  if (isWin32.value && window.electronAPI?.window) {
+    // 适配全局变量系统中的 bg-primary 颜色
+    const color = props.isDark ? '#17171a' : '#ffffff'
+    const symbolColor = props.isDark ? '#f5f5f5' : '#1f2329'
+    window.electronAPI.window.setTitlebarColor(color, symbolColor)
+  }
+}
+
+watch(() => props.isDark, () => {
+  updateWCO()
 })
 
 function handleThemeToggle() {
@@ -76,6 +98,11 @@ function handleThemeToggle() {
   border-bottom: 1px solid var(--border-color);
   z-index: 10;
   -webkit-app-region: drag;
+  transition: padding var(--transition-base);
+}
+
+.app-header.is-win32 {
+  padding-right: 140px; /* 为 Windows 原生控制按钮留出空间 */
 }
 
 .header-left {

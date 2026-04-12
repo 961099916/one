@@ -74,4 +74,41 @@ export function initAppHandlers(): void {
     }
     return result.filePaths[0]
   })
+
+  // ==================== 窗口控制 ====================
+
+  ipcMain.handle(IpcChannel.WINDOW_MINIMIZE, (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.minimize()
+  })
+
+  ipcMain.handle(IpcChannel.WINDOW_MAXIMIZE, (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.maximize()
+  })
+
+  ipcMain.handle(IpcChannel.WINDOW_UNMAXIMIZE, (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.unmaximize()
+  })
+
+  ipcMain.handle(IpcChannel.WINDOW_CLOSE, (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.close()
+  })
+
+  ipcMain.handle(IpcChannel.WINDOW_IS_MAXIMIZED, (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    return win?.isMaximized()
+  })
+
+  ipcMain.handle(IpcChannel.WINDOW_SET_TITLEBAR_COLOR, (event, { color, symbolColor }) => {
+    if (process.platform !== 'win32') return
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.setTitleBarOverlay({
+      color,
+      symbolColor,
+      height: 32
+    })
+  })
 }

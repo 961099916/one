@@ -122,6 +122,16 @@ export interface ElectronAPI {
     getMinuteData: (params: { tdxPath: string; symbol: string; date: string; period?: '1' | '5' }) => Promise<any>
     openStock: (symbol: string) => Promise<void>
   }
+
+  // 窗口控制
+  window: {
+    minimize: () => Promise<void>
+    maximize: () => Promise<void>
+    unmaximize: () => Promise<void>
+    close: () => Promise<void>
+    isMaximized: () => Promise<boolean>
+    setTitlebarColor: (color: string, symbolColor: string) => Promise<void>
+  }
 }
 
 export interface AppConfig {
