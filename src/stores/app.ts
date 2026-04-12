@@ -35,6 +35,8 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
   sidebarWidth: 260,
   autoLoadModel: false,
   tdxPath: '',
+  thsPath: '',
+  linkagePreference: 'tdx',
   proxy: {
     enable: false,
     protocol: 'http',

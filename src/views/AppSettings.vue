@@ -140,28 +140,74 @@
 
     <!-- 数据源 -->
     <section class="setting-section">
-      <h3 class="section-title">数据源</h3>
+      <h3 class="section-title">数据源与联动</h3>
       <div class="setting-card">
+        <!-- 通达信 -->
         <div class="setting-row">
           <div class="setting-info">
-            <span class="setting-label">通达信数据路径</span>
-            <span class="setting-desc">指定通达信安装目录下的 vipdoc 文件夹，用于加载分时对比数据</span>
+            <span class="setting-label">通达信安装路径</span>
+            <span class="setting-desc">指定通达信主程序 (TdxW.exe) 或 vipdoc 目录</span>
           </div>
           <div class="input-action-wrap">
             <input 
               type="text" 
               class="text-input" 
               :value="settings.tdxPath" 
-              placeholder="例如: C:\tdx\vipdoc"
+              placeholder="例如: C:\tdx\TdxW.exe"
               @change="e => updateSettings({ tdxPath: (e.target as HTMLInputElement).value })"
             />
             <button 
               class="btn btn-primary-ghost" 
               @click="handleSelectTdxPath"
             >
-              选择目录
+              选择
             </button>
           </div>
+        </div>
+
+        <div class="setting-divider" />
+
+        <!-- 同花顺 -->
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">同花顺安装路径</span>
+            <span class="setting-desc">指定同花顺主程序 (hexin.exe) 的路径，用于直连联动</span>
+          </div>
+          <div class="input-action-wrap">
+            <input 
+              type="text" 
+              class="text-input" 
+              :value="settings.thsPath" 
+              placeholder="例如: C:\ths\hexin.exe"
+              @change="e => updateSettings({ thsPath: (e.target as HTMLInputElement).value })"
+            />
+            <button 
+              class="btn btn-primary-ghost" 
+              @click="handleSelectThsPath"
+            >
+              选择
+            </button>
+          </div>
+        </div>
+
+        <div class="setting-divider" />
+
+        <!-- 联动偏好 -->
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">联动偏好设置</span>
+            <span class="setting-desc">点击股票名称时优先拉起的软件（可同时开启）</span>
+          </div>
+          <select 
+            class="select-input" 
+            style="width: 140px"
+            :value="settings.linkagePreference"
+            @change="e => updateSettings({ linkagePreference: (e.target as HTMLSelectElement).value as any })"
+          >
+            <option value="tdx">仅通达信</option>
+            <option value="ths">仅同花顺</option>
+            <option value="both">同时开启</option>
+          </select>
         </div>
       </div>
     </section>
@@ -315,6 +361,19 @@ async function handleSelectTdxPath() {
     const path = await window.electronAPI.app.selectDirectory()
     if (path) {
       updateSettings({ tdxPath: path })
+      message.success('已选择路径')
+    }
+  } catch (err) {
+    log.error('[Settings] 选择目录失败:', err)
+    message.error('选择目录失败')
+  }
+}
+
+async function handleSelectThsPath() {
+  try {
+    const path = await window.electronAPI.app.selectDirectory()
+    if (path) {
+      updateSettings({ thsPath: path })
       message.success('已选择路径')
     }
   } catch (err) {

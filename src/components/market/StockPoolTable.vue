@@ -85,7 +85,7 @@ import { RefreshOutline, Sync, Analytics, Flame } from '@vicons/ionicons5'
 import { formatDate } from '@/utils/format'
 import { useStockActions } from '@/composables/useStockActions'
 
-const { openInTdx } = useStockActions()
+const { handleStockClick } = useStockActions()
 
 interface StockPoolRow {
   symbol: string
@@ -405,9 +405,6 @@ const handleSync = async () => {
   }
 }
 
-const handleStockClick = (symbol: string) => {
-  openInTdx(symbol)
-}
 
 onMounted(async () => {
   loading.value = true

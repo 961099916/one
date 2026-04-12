@@ -162,7 +162,7 @@ import type { SurgeStockRow } from '../../electron/infrastructure/database/types
 import { useAppStore } from '@/stores'
 import { useStockActions } from '@/composables/useStockActions'
 
-const { openInTdx } = useStockActions()
+const { handleStockClick: openInPreferredApp } = useStockActions()
 import VChart from 'vue-echarts'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
@@ -384,7 +384,7 @@ const rowProps = (row: SurgeStockRow) => {
 }
 
 const handleStockClick = (row: SurgeStockRow) => {
-  openInTdx(row.symbol)
+  openInPreferredApp(row.symbol)
 }
 
 // 全局过滤与预处理后的时间轴数据

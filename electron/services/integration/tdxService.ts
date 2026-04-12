@@ -127,9 +127,38 @@ export class TdxService {
     } catch { return [] }
   }
 
-  async openStock(symbol: string) {
+  async openStock(symbol: string, tdxPath?: string) {
     const code = symbol.replace(/[^0-9]/g, '')
-    log.info(`[TdxService] Opening stock in external app: tdx://${code}`)
+    
+    log.info(`[TdxService] openStock: platform=${process.platform}, tdxPath=${tdxPath}, code=${code}`)
+
+    // 如果是 Windows 且提供了路径，优先使用路径直连
+    if (process.platform === 'win32' && tdxPath && fs.existsSync(tdxPath)) {
+      try {
+        const { spawn } = require('child_process')
+        log.info(`[TdxService] Attempting to open stock via spawn: ${tdxPath} /s ${code}`)
+        spawn(tdxPath, ['/s', code], { detached: true, stdio: 'ignore' }).unref()
+        return { success: true }
+      } catch (err) {
+        log.error(`[TdxService] Failed to spawn process: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    }
+
+    // 对于 Mac，如果路径以 .app 结尾，我们可以尝试用 open 命令
+    if (process.platform === 'darwin' && tdxPath && tdxPath.endsWith('.app')) {
+      try {
+        const { exec } = require('child_process')
+        log.info(`[TdxService] Attempting to open stock via open command: ${tdxPath}`)
+        // 注意：Mac 版通达信可能不支持直接传参跳转，但我们可以先唤起
+        exec(`open -a "${tdxPath}"`) 
+        // 继续回退到协议跳转，因为协议跳转在软件打开的情况下通常能生效
+      } catch (err) {
+        log.error(`[TdxService] Failed to open .app: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    }
+
+    // 回退到协议唤起
+    log.info(`[TdxService] Falling back to URL scheme: tdx://${code}`)
     await shell.openExternal(`tdx://${code}`).catch((err) => {
       log.error(`[TdxService] Failed to open external app: ${err.message}`)
     })

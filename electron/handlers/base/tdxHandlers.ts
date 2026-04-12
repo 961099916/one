@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import { IpcChannel } from '../../constants'
 import { TdxService } from '../../services/integration/tdxService'
+import { appConfigOps } from '../../infrastructure/store/appConfig'
 
 export function initTdxHandlers(): void {
   const tdxService = TdxService.getInstance()
@@ -19,7 +20,8 @@ export function initTdxHandlers(): void {
   ipcMain.handle(
     IpcChannel.TDX_OPEN_STOCK,
     async (_event, symbol: string) => {
-      return await tdxService.openStock(symbol)
+      const tdxPath = appConfigOps.get('tdxPath')
+      return await tdxService.openStock(symbol, tdxPath)
     }
   )
 }

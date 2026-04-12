@@ -59,6 +59,8 @@ export interface AppConfig {
 
   // 数据源设置
   tdxPath: string
+  thsPath: string
+  linkagePreference: 'tdx' | 'ths' | 'both'
 
   // 网络代理
   proxy: ProxyConfig
@@ -93,6 +95,8 @@ const defaultConfig: AppConfig = {
   generationParams: DEFAULT_GENERATION_PARAMS,
   currentSessionId: '',
   tdxPath: '',
+  thsPath: '',
+  linkagePreference: 'tdx',
   proxy: {
     enable: false,
     protocol: 'http',

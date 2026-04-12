@@ -15,13 +15,25 @@ export class TongHuaShunService {
   /**
    * 在同花顺中打开股票
    * @param stockCode 股票代码（如：600519、300033）
+   * @param thsPath 同花顺安装路径（可选）
    */
-  async openStock(stockCode: string): Promise<{ success: boolean; error?: string }> {
+  async openStock(stockCode: string, thsPath?: string): Promise<{ success: boolean; error?: string }> {
     try {
       log.info(`${LogTags.TONGHUASHUN} 尝试打开股票: ${stockCode}`)
 
       // 格式化股票代码
-      const cleanCode = stockCode.replace(/\s/g, '')
+      const cleanCode = stockCode.replace(/[^0-9]/g, '')
+
+      // 如果是 Windows 且提供了路径，优先使用路径直连
+      if (process.platform === 'win32' && thsPath && fs.existsSync(thsPath)) {
+        try {
+          log.info(`${LogTags.TONGHUASHUN} Attempting to open stock via path: ${thsPath} -s ${cleanCode}`)
+          spawn(thsPath, ['-s', cleanCode], { detached: true, stdio: 'ignore' }).unref()
+          return { success: true }
+        } catch (err) {
+          log.error(`${LogTags.TONGHUASHUN} Failed to spawn THS process: ${err instanceof Error ? err.message : String(err)}`)
+        }
+      }
 
       // 方法1: 使用 amihexin:// scheme
       const url1 = `${TongHuaShunConfig.SCHEMES.AMIHEXIN}${TongHuaShunConfig.PATHS.STOCK}${cleanCode}`

@@ -87,6 +87,10 @@ export interface AppSettings {
   autoLoadModel: boolean
   /** 通达信数据路径 (vipdoc 目录) */
   tdxPath: string
+  /** 同花顺安装路径 (hexin.exe) */
+  thsPath: string
+  /** 联动偏好设置 */
+  linkagePreference: 'tdx' | 'ths' | 'both'
   /** 网络代理设置 */
   proxy: ProxyConfig
 }

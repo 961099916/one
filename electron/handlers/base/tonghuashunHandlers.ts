@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import { IpcChannel } from '../../constants'
 import { TongHuaShunService } from '../../services/integration/tonghuashunService'
+import { appConfigOps } from '../../infrastructure/store/appConfig'
 import log from 'electron-log'
 
 export function initTongHuaShunHandlers(): void {
@@ -9,8 +10,9 @@ export function initTongHuaShunHandlers(): void {
   // 打开股票
   ipcMain.handle(IpcChannel.OPEN_TONGHUASHUN_STOCK, async (_event, stockCode: string) => {
     log.info(`[IPC] 调用 OPEN_TONGHUASHUN_STOCK, stockCode: ${stockCode}`)
+    const thsPath = appConfigOps.get('thsPath')
     const service = TongHuaShunService.getInstance()
-    return await service.openStock(stockCode)
+    return await service.openStock(stockCode, thsPath)
   })
 
   // 打开同花顺应用

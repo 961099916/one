@@ -131,4 +131,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openStock: (symbol: string) =>
       ipcRenderer.invoke('tdx:open-stock', symbol),
   },
+  // ---------- 同花顺联动 ----------
+  ths: {
+    openStock: (symbol: string) =>
+      ipcRenderer.invoke('open-tonghuashun-stock', symbol),
+  },
 })
+
