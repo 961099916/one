@@ -61,7 +61,13 @@ export interface DownloadResult {
   error?: string
 }
 
-// ==================== 应用设置 ====================
+/** 代理配置接口 */
+export interface ProxyConfig {
+  enable: boolean
+  protocol: 'http' | 'https' | 'socks5'
+  host: string
+  port: number
+}
 
 /** 应用设置接口 */
 export interface AppSettings {
@@ -81,6 +87,8 @@ export interface AppSettings {
   autoLoadModel: boolean
   /** 通达信数据路径 (vipdoc 目录) */
   tdxPath: string
+  /** 网络代理设置 */
+  proxy: ProxyConfig
 }
 
 /** 窗口状态接口 */

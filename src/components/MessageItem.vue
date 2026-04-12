@@ -1,10 +1,9 @@
 <template>
-  <div :class="message.role === 'assistant' ? 'message-assistant' : 'message-user'">
-    <div class="message-container">
-      <div :class="message.role === 'assistant' ? 'assistant-avatar' : 'user-avatar'" class="avatar">
-        <n-icon size="18">
-          <sparkles-outline v-if="message.role === 'assistant'" />
-          <person-outline v-else />
+  <div :class="['message-wrapper', message.role === 'assistant' ? 'wrapper-assistant' : 'wrapper-user']">
+    <div :class="['message-item', message.role === 'assistant' ? 'item-assistant' : 'item-user']">
+      <div v-if="message.role === 'assistant'" class="avatar assistant-avatar">
+        <n-icon size="20">
+          <sparkles-outline />
         </n-icon>
       </div>
       <div class="message-content">
@@ -12,6 +11,11 @@
           <div class="markdown-body" v-html="renderMarkdown(message.content)"></div>
         </div>
         <span v-if="showCursor" class="cursor"></span>
+      </div>
+      <div v-if="message.role === 'user'" class="avatar user-avatar">
+        <n-icon size="20">
+          <person-outline />
+        </n-icon>
       </div>
     </div>
   </div>
@@ -61,67 +65,100 @@ const renderMarkdown = (text: string) => {
 </script>
 
 <style scoped>
-/* 消息样式 */
-.message-assistant {
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
+.message-wrapper {
+  display: flex;
+  margin-bottom: 24px;
+  width: 100%;
 }
 
-.message-user {
-  background: var(--bg-primary);
+.wrapper-assistant {
+  justify-content: flex-start;
 }
 
-.message-container {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 16px 24px;
+.wrapper-user {
+  justify-content: flex-end;
+}
+
+.message-item {
   display: flex;
   gap: 12px;
-  align-items: flex-start;
+  max-width: 85%;
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.item-user {
+  flex-direction: row;
+}
+
+.item-assistant {
+  flex-direction: row;
 }
 
 /* 头像 */
 .avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--border-radius-md);
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: white;
+  box-shadow: var(--shadow-sm);
 }
 
 .assistant-avatar {
-  background: var(--primary-color);
+  background: linear-gradient(135deg, #165dff, #3c7eff);
+  color: white;
 }
 
 .user-avatar {
-  background: var(--text-tertiary);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
 }
 
-/* 消息内容 */
+/* 消息内容气泡 */
 .message-content {
-  flex: 1;
-  min-width: 0;
-  padding-top: 3px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  position: relative;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+}
+
+.item-assistant .message-content {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-top-left-radius: 4px;
+  color: var(--text-primary);
+}
+
+.item-user .message-content {
+  background: var(--primary-color);
+  color: white;
+  border-top-right-radius: 4px;
 }
 
 .markdown-content {
-  line-height: 1.6;
-  font-size: 14px;
+  word-break: break-word;
 }
 
 /* 光标动画 */
 .cursor {
   display: inline-block;
   width: 2px;
-  height: 18px;
+  height: 16px;
   background: var(--primary-color);
   margin-left: 4px;
   animation: blink 1.4s infinite;
-  vertical-align: text-bottom;
+  vertical-align: middle;
 }
 
 @keyframes blink {
@@ -134,62 +171,55 @@ const renderMarkdown = (text: string) => {
   background-color: transparent !important;
   color: inherit !important;
   font-family: inherit !important;
+  font-size: inherit !important;
   padding: 0 !important;
   margin: 0 !important;
 }
+
+.item-user :deep(.markdown-body) {
+  color: white !important;
+}
+
 :deep(.markdown-body pre) {
-  background-color: var(--bg-tertiary) !important;
-  border-radius: var(--border-radius-md) !important;
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  border-radius: 8px !important;
   padding: 12px !important;
   margin: 8px 0 !important;
-  overflow-x: auto !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
 }
+
+[data-theme="dark"] :deep(.markdown-body pre) {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
 :deep(.markdown-body code) {
   background-color: rgba(0, 82, 204, 0.1) !important;
   color: var(--primary-color) !important;
-  padding: 2px 6px !important;
-  border-radius: 3px !important;
+  padding: 2px 4px !important;
+  border-radius: 4px !important;
   font-size: 0.9em !important;
 }
-:deep(.markdown-body pre code) {
-  background-color: transparent !important;
-  padding: 0 !important;
+
+.item-user :deep(.markdown-body code) {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
 }
-:deep(.markdown-body a) {
-  color: var(--primary-color) !important;
-  text-decoration: none !important;
-}
-:deep(.markdown-body a:hover) {
-  text-decoration: underline !important;
-}
+
 :deep(.markdown-body p) {
   margin: 0 0 8px 0 !important;
 }
-:deep(.markdown-body ul, .markdown-body ol) {
-  margin: 0 0 8px 24px !important;
-}
-:deep(.markdown-body blockquote) {
-  border-left: 3px solid var(--border-color) !important;
-  padding-left: 16px !important;
-  margin: 8px 0 !important;
-  color: var(--text-secondary) !important;
+
+:deep(.markdown-body p:last-child) {
+  margin-bottom: 0 !important;
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
-  .message-container {
-    padding: 12px 16px;
-    gap: 10px;
+  .message-item {
+    max-width: 95%;
   }
-  
-  .avatar {
-    width: 32px;
-    height: 32px;
-  }
-  
-  .markdown-content {
+  .message-content {
+    padding: 10px 14px;
     font-size: 13px;
-    line-height: 1.5;
   }
 }
 </style>

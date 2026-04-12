@@ -69,12 +69,30 @@ function handleMenuClick() {
   overflow-x: hidden;
 }
 
+:deep(.n-menu .n-menu-item-content) {
+  height: 40px !important;
+  margin: 4px 12px !important;
+  border-radius: var(--border-radius-md) !important;
+  transition: all var(--transition-base) !important;
+}
+
+:deep(.n-menu .n-menu-item-content:hover) {
+  background-color: var(--bg-sidebar-hover) !important;
+}
+
+:deep(.n-menu .n-menu-item-content.n-menu-item-content--selected) {
+  background-color: var(--bg-sidebar-active) !important;
+  color: var(--primary-color) !important;
+}
+
 :deep(.n-menu .n-menu-item-content .n-menu-item-content-header) {
   font-weight: 500;
+  font-size: 13px;
 }
 
 :deep(.n-menu.n-menu--collapsed .n-menu-item-content) {
   padding-left: 0 !important;
   justify-content: center;
+  margin: 4px 8px !important;
 }
 </style>

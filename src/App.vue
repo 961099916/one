@@ -1,5 +1,10 @@
 <template>
-  <n-config-provider :locale="zhCN" :date-locale="dateZhCN">
+  <n-config-provider 
+    :locale="zhCN" 
+    :date-locale="dateZhCN"
+    :theme="activeTheme"
+    :theme-overrides="activeThemeOverrides"
+  >
     <n-message-provider>
       <n-dialog-provider>
         <n-notification-provider>
@@ -24,6 +29,19 @@ import {
   zhCN,
   dateZhCN
 } from 'naive-ui'
+import { computed } from 'vue'
+import { useAppStore } from '@/stores'
+import { arcoTechThemeOverrides, lightArcoThemeOverrides, darkTheme } from '@/styles/naive-theme'
+
+const appStore = useAppStore()
+
+const activeTheme = computed(() => {
+  return appStore.currentTheme === 'dark' ? darkTheme : null
+})
+
+const activeThemeOverrides = computed(() => {
+  return appStore.currentTheme === 'dark' ? arcoTechThemeOverrides : lightArcoThemeOverrides
+})
 </script>
 
 <style>

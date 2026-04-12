@@ -233,7 +233,18 @@ export function initDbHandlers(): void {
     }
   })
 
-  /** 手动更新特定日期的交易状态 */
+  /** 获取最近的一个交易日 */
+  ipcMain.handle(IpcChannel.DB_GET_LATEST_TRADING_DAY, () => {
+    log.info('[IPC] 调用 DB_GET_LATEST_TRADING_DAY')
+    try {
+      return tradingDayOps.getLatestTradingDay()
+    } catch (err) {
+      log.error('[DB IPC] get-latest-trading-day 失败:', err)
+      throw err
+    }
+  })
+
+  /** 手工更新特定日期的交易状态 */
   ipcMain.handle(IpcChannel.DB_UPDATE_TRADING_DAY, (_event, { date, isTrading }) => {
     log.info(`[IPC] 调用 DB_UPDATE_TRADING_DAY, 日期: ${date}, 状态: ${isTrading}`)
     try {

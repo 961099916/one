@@ -473,7 +473,19 @@ const handleSync = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  loading.value = true
+  try {
+    const latestDay = await (window as any).electronAPI.db.getLatestTradingDay()
+    if (latestDay && latestDay.date) {
+      // 避免时区偏移：使用 '/' 替换 '-' 让 Date 按本地时间解析 YYYY/MM/DD
+      const latestTs = new Date(latestDay.date.replace(/-/g, '/')).getTime()
+      filterRange.value = [latestTs, latestTs]
+      syncRange.value = [latestTs, latestTs]
+    }
+  } catch (err) {
+    console.error('Failed to get latest trading day in MarketData:', err)
+  }
   fetchData()
 })
 </script>

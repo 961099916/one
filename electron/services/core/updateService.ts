@@ -143,14 +143,24 @@ export class UpdateService {
     autoUpdater.on('error', (err) => {
       log.error('[UpdateService] 更新过程中出错:', err)
       
+      const errMsg = err.message || ''
+      let userFriendlyMsg = '更新过程中出现错误'
+
+      if (errMsg.includes('net::ERR_CONNECTION_CLOSED') || errMsg.includes('net::ERR_CONNECTION_TIMED_OUT')) {
+        userFriendlyMsg = '连接更新服务器失败，请检查网络连接或尝试配置代理。'
+      } else if (errMsg.includes('handshake failed') || errMsg.includes('SSL')) {
+        userFriendlyMsg = '安全连接建立失败 (SSL Error)，请检查系统代理设置。'
+      }
+
       // 特殊处理 macOS 签名校验失败
-      const isAuthError = err.message.includes('Code signature') || 
-                          err.message.includes('validation') ||
-                          err.message.includes('ShipIt')
+      const isAuthError = errMsg.includes('Code signature') || 
+                          errMsg.includes('validation') ||
+                          errMsg.includes('ShipIt')
 
       this.sendToRenderer(IpcChannel.UPDATE_STATUS, {
         status: 'error',
-        error: err.message,
+        message: userFriendlyMsg,
+        error: errMsg,
         isAuthError: isAuthError && process.platform === 'darwin'
       })
     })

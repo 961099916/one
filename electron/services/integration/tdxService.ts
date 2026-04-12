@@ -129,7 +129,10 @@ export class TdxService {
 
   async openStock(symbol: string) {
     const code = symbol.replace(/[^0-9]/g, '')
-    await shell.openExternal(`tdx://${code}`).catch(() => {})
+    log.info(`[TdxService] Opening stock in external app: tdx://${code}`)
+    await shell.openExternal(`tdx://${code}`).catch((err) => {
+      log.error(`[TdxService] Failed to open external app: ${err.message}`)
+    })
     return { success: true }
   }
 

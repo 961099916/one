@@ -1,11 +1,11 @@
-import { app, type BrowserWindow, dialog } from 'electron'
+import { app, type BrowserWindow, dialog, session } from 'electron'
 import { initLogger, logger as log } from '../utils/logger'
 import { createMainWindow, createTray, buildAppMenu } from '../services/ui'
 import { initStorageDirs } from '../infrastructure/storage'
 import { initDB, closeDB } from '../infrastructure/database'
 import { initAllHandlers } from '../handlers/base'
 import { initModelIpcHandlers } from '../handlers/model.handler'
-import { windowStateOps } from '../infrastructure/store'
+import { windowStateOps, appConfigOps } from '../infrastructure/store'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { UpdateService } from '../services/core/updateService'
@@ -54,6 +54,31 @@ export function saveWindowState(): void {
   }
 }
 
+/**
+ * 设置网络代理
+ */
+async function setupNetworkProxy(): Promise<void> {
+  const config = appConfigOps.getAll()
+  const { proxy } = config
+
+  if (proxy && proxy.enable) {
+    const proxyUrl = `${proxy.protocol}://${proxy.host}:${proxy.port}`
+    log.info(`[Bootstrap] 正在应用网络代理: ${proxyUrl}`)
+    try {
+      await session.defaultSession.setProxy({
+        proxyRules: proxyUrl,
+        proxyBypassRules: 'localhost,127.0.0.1'
+      })
+    } catch (err) {
+      log.error('[Bootstrap] 设置代理失败:', err)
+    }
+  } else {
+    log.debug('[Bootstrap] 代理未启用，使用系统默认设置')
+    // 显式重置为无代理或系统代理 (如果不设置，Electron 默认使用系统设置)
+    // await session.defaultSession.setProxy({ proxyRules: '' })
+  }
+}
+
 export async function bootstrap(): Promise<void> {
   initLogger()
 
@@ -94,6 +119,9 @@ export async function bootstrap(): Promise<void> {
       app.quit()
       return
     }
+
+    // 设置网络代理
+    await setupNetworkProxy()
 
     initAllHandlers()
     buildAppMenu()

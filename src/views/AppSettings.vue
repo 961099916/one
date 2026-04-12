@@ -138,12 +138,6 @@
       </div>
     </section>
 
-    <!-- 系统相关配置 -->
-    <section class="setting-section">
-      <h3 class="section-title">系统</h3>
-      <!-- ... 原有内容将被保留，但在局部替换逻辑中我们专注于新增内容 -->
-    </section>
-
     <!-- 数据源 -->
     <section class="setting-section">
       <h3 class="section-title">数据源</h3>
@@ -168,6 +162,66 @@
               选择目录
             </button>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 网络代理 -->
+    <section class="setting-section">
+      <h3 class="section-title">网络代理</h3>
+      <div class="setting-card">
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">启用手动代理</span>
+            <span class="setting-desc">当应用无法检查更新或同步数据时，尝试手动运行代理</span>
+          </div>
+          <label class="toggle">
+            <input
+              type="checkbox"
+              :checked="settings.proxy.enable"
+              @change="handleProxyToggle"
+            />
+            <span class="toggle-track" />
+          </label>
+        </div>
+
+        <template v-if="settings.proxy.enable">
+          <div class="setting-divider" />
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">代理服务器</span>
+              <span class="setting-desc">配置代理协议、地址和端口</span>
+            </div>
+            <div class="proxy-inputs">
+              <select 
+                class="select-input" 
+                :value="settings.proxy.protocol"
+                @change="e => updateProxy({ protocol: (e.target as HTMLSelectElement).value as any })"
+              >
+                <option value="http">HTTP</option>
+                <option value="https">HTTPS</option>
+                <option value="socks5">SOCKS5</option>
+              </select>
+              <input 
+                type="text" 
+                class="text-input" 
+                :value="settings.proxy.host"
+                placeholder="127.0.0.1"
+                @change="e => updateProxy({ host: (e.target as HTMLInputElement).value })"
+              />
+              <input 
+                type="number" 
+                class="text-input port-input" 
+                :value="settings.proxy.port"
+                placeholder="7890"
+                @change="e => updateProxy({ port: Number((e.target as HTMLInputElement).value) })"
+              />
+            </div>
+          </div>
+        </template>
+        
+        <div v-if="settings.proxy.enable" class="proxy-notice">
+          <n-text depth="3" style="font-size: 11px">更改代理设置后可能需要重启应用以完全生效</n-text>
         </div>
       </div>
     </section>
@@ -267,6 +321,19 @@ async function handleSelectTdxPath() {
     log.error('[Settings] 选择目录失败:', err)
     message.error('选择目录失败')
   }
+}
+
+function handleProxyToggle(e: Event) {
+  const enable = (e.target as HTMLInputElement).checked
+  updateSettings({
+    proxy: { ...settings.value.proxy, enable }
+  })
+}
+
+function updateProxy(patch: Partial<AppConfig['proxy']>) {
+  updateSettings({
+    proxy: { ...settings.value.proxy, ...patch }
+  })
 }
 
 function handleReset() {
@@ -511,6 +578,34 @@ function handleReset() {
 .text-input:focus {
   border-color: var(--primary-color);
   background: var(--bg-primary);
+}
+
+.proxy-inputs {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  max-width: 400px;
+}
+
+.select-input {
+  width: 90px;
+  padding: 8px;
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+}
+
+.port-input {
+  width: 80px;
+  flex: none;
+}
+
+.proxy-notice {
+  padding: 0 20px 16px;
+  margin-top: -8px;
 }
 
 .btn-primary-ghost {

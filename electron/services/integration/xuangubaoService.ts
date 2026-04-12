@@ -95,7 +95,16 @@ export class XuanguBaoService {
       return result.data
     } catch (err) {
       const duration = (performance.now() - startTime).toFixed(2)
-      log.error(`${LogTags.XUANGUBAO} [Exception] ${err}, 耗时: ${duration}ms, URL: ${url}`)
+      const error = err as Error
+      let errorMsg = error.message || String(err)
+      
+      if (errorMsg.includes('SSL') || errorMsg.includes('handshake')) {
+        errorMsg = `SSL 握手失败，可能是代理冲突或网络受限 (${errorMsg})`
+      } else if (errorMsg.includes('fetch')) {
+        errorMsg = `网络请求失败，请检查连接 (${errorMsg})`
+      }
+
+      log.error(`${LogTags.XUANGUBAO} [Exception] ${errorMsg}, 耗时: ${duration}ms, URL: ${url}`)
       return null
     }
   }

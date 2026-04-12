@@ -12,7 +12,7 @@ export function initTdxHandlers(): void {
       params: { tdxPath: string; symbol: string; date: string; period?: '1' | '5' }
     ) => {
       const { tdxPath, symbol, date, period = '5' } = params
-      return await tdxService.getMinuteData(tdxPath, symbol, date, period)
+      return await tdxService.getMinuteData({ tdxPath, symbol, date, period })
     }
   )
 

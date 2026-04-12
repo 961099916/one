@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar-content">
+  <div class="sidebar-content glass-effect">
     <div class="sidebar-header">
       <SidebarLogo :is-collapse="isCollapse" @toggle="handleToggle" />
     </div>
@@ -34,6 +34,7 @@ function handleToggle() {
   flex-direction: column;
   height: 100%;
   background-color: var(--bg-sidebar);
+  border-right: 1px solid var(--border-color);
 }
 
 .sidebar-header {

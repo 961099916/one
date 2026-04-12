@@ -35,6 +35,12 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
   sidebarWidth: 260,
   autoLoadModel: false,
   tdxPath: '',
+  proxy: {
+    enable: false,
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 7890
+  }
 }
 
 export const useAppStore = defineStore(

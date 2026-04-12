@@ -163,6 +163,7 @@ export const IpcChannel = {
   DB_GET_SURGE_TIMESTAMPS: 'db:get-surge-timestamps',
   DB_GET_SURGE_HISTORICAL_DATES: 'db:get-surge-historical-dates',
     DB_GET_SENTIMENT_CYCLE: 'db:get-sentiment-cycle',
+  DB_GET_LATEST_TRADING_DAY: 'db:get-latest-trading-day',
 
   // 配置（electron-store）
   CONFIG_GET: 'config:get',

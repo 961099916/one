@@ -95,30 +95,37 @@ function autoResize() {
 <style scoped>
 /* 聊天输入容器 */
 .chat-input-container {
-  padding: 0 24px 20px;
-  background: var(--bg-primary);
-  border-top: 1px solid var(--border-color);
+  padding: 0 24px 24px;
+  background: transparent;
 }
 
 /* 表单样式 */
 .input-form {
-  max-width: 720px;
+  max-width: 800px;
   margin: 0 auto;
   display: flex;
   align-items: flex-end;
   gap: 12px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-lg);
-  padding: 12px 12px 12px 16px;
-  box-shadow: var(--shadow-sm);
+  padding: 12px 14px;
+  border-radius: 18px;
+  box-shadow: var(--shadow-md);
   transition: all var(--transition-base);
 }
 
-.input-form:focus-within {
-  border-color: var(--primary-color);
+.input-form {
   background: var(--bg-primary);
-  box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.1);
+  border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .input-form {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color-strong);
+}
+
+.input-form:focus-within {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
 }
 
 /* 输入区域 */
@@ -137,7 +144,7 @@ function autoResize() {
   font-size: 14px;
   line-height: 1.6;
   resize: none;
-  padding: 0;
+  padding: 4px 0;
   outline: none;
   max-height: 160px;
   min-height: 24px;
@@ -145,7 +152,8 @@ function autoResize() {
 }
 
 .chat-input::placeholder {
-  color: var(--text-placeholder);
+  color: var(--text-tertiary);
+  opacity: 0.7;
 }
 
 .chat-input:disabled {
@@ -156,10 +164,10 @@ function autoResize() {
 /* 按钮样式 */
 .send-btn,
 .stop-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--border-radius-md);
-  border: 1px solid transparent;
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -172,54 +180,40 @@ function autoResize() {
 .send-btn {
   background: var(--primary-color);
   color: white;
-  border-color: var(--primary-color);
 }
 
 .send-btn:hover:not(:disabled) {
   background: var(--primary-hover);
-  border-color: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+  transform: scale(1.05);
+}
+
+.send-btn:active:not(:disabled) {
+  transform: scale(0.95);
 }
 
 .send-btn:disabled {
-  background: var(--border-color);
+  background: var(--bg-app);
   color: var(--text-disabled);
-  border-color: var(--border-color);
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
 
 .stop-btn {
   background: var(--danger-color);
   color: white;
-  border-color: var(--danger-color);
 }
 
 .stop-btn:hover {
   background: var(--danger-hover);
-  border-color: var(--danger-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
-}
-
-.stop-btn:disabled {
-  background: var(--border-color);
-  color: var(--text-disabled);
-  border-color: var(--border-color);
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+  transform: scale(1.05);
 }
 
 /* 提示文字 */
 .input-tip {
   text-align: center;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-tertiary);
-  margin-top: 8px;
-  line-height: 1.4;
+  margin-top: 12px;
+  opacity: 0.6;
 }
 
 /* 响应式设计 */
@@ -258,24 +252,23 @@ function autoResize() {
 
 /* 深色模式支持 */
 [data-theme="dark"] .chat-input-container {
-  background: var(--bg-dark);
-  border-top-color: var(--border-color-dark);
+  background: transparent;
 }
 
 [data-theme="dark"] .input-form {
-  background: var(--bg-dark-secondary);
-  border-color: var(--border-color-dark);
+  background: var(--bg-secondary);
+  border-color: var(--border-color-strong);
 }
 
 [data-theme="dark"] .chat-input {
-  color: var(--text-dark-primary);
+  color: var(--text-primary);
 }
 
 [data-theme="dark"] .chat-input::placeholder {
-  color: var(--text-dark-placeholder);
+  color: var(--text-tertiary);
 }
 
 [data-theme="dark"] .input-tip {
-  color: var(--text-dark-tertiary);
+  color: var(--text-tertiary);
 }
 </style>

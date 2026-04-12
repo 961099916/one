@@ -27,6 +27,17 @@ export interface GenerationParams {
   contextSize: number
 }
 
+export interface ProxyConfig {
+  enable: boolean
+  protocol: 'http' | 'https' | 'socks5'
+  host: string
+  port: number
+  auth?: {
+    username?: string
+    password?: string
+  }
+}
+
 export interface AppConfig {
   // 窗口状态
   windowState: WindowState
@@ -48,6 +59,9 @@ export interface AppConfig {
 
   // 数据源设置
   tdxPath: string
+
+  // 网络代理
+  proxy: ProxyConfig
 }
 
 // ==================== 默认配置 ====================
@@ -79,6 +93,12 @@ const defaultConfig: AppConfig = {
   generationParams: DEFAULT_GENERATION_PARAMS,
   currentSessionId: '',
   tdxPath: '',
+  proxy: {
+    enable: false,
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 7890
+  }
 }
 
 // ==================== Store 实例 ====================

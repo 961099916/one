@@ -21,17 +21,17 @@
   --sidebar-width: 260px;
   --titlebar-height: 0px; /* macOS hiddenInset 留白由系统处理 */
 
-  /* 主色系（深蓝，飞书风格） */
-  --primary-color: #1456ff;
-  --primary-hover: #0e46d9;
-  --primary-active: #0937b3;
-  --primary-bg: rgba(20, 86, 255, 0.08);
-  --primary-bg-hover: rgba(20, 86, 255, 0.12);
+  /* 主色系（Arco Design Blue - 大厂专业风） */
+  --primary-color: #165dff;
+  --primary-hover: #4080ff;
+  --primary-active: #0e42d2;
+  --primary-bg: rgba(22, 93, 255, 0.06);
+  --primary-bg-hover: rgba(22, 93, 255, 0.1);
 
   /* 危险色 */
-  --danger-color: #f54a45;
-  --danger-hover: #d93e3a;
-  --danger-bg: rgba(245, 74, 69, 0.08);
+  --danger-color: #f53f3f;
+  --danger-hover: #d33030;
+  --danger-bg: rgba(245, 63, 63, 0.08);
 
   /* 成功色 */
   --success-color: #00b42a;
@@ -42,12 +42,12 @@
   --warning-bg: rgba(255, 125, 0, 0.08);
 
   /* 背景色层级 */
-  --bg-app: #f0f1f5;
+  --bg-app: #f2f3f5;
   --bg-primary: #ffffff;
   --bg-secondary: #f7f8fa;
-  --bg-sidebar: #f2f3f7;
-  --bg-sidebar-hover: #e8eaf0;
-  --bg-sidebar-active: rgba(20, 86, 255, 0.1);
+  --bg-sidebar: #ffffff;
+  --bg-sidebar-hover: #f2f3f5;
+  --bg-sidebar-active: rgba(22, 93, 255, 0.06);
   --bg-input: #ffffff;
   --bg-overlay: rgba(0, 0, 0, 0.45);
 
@@ -67,15 +67,19 @@
   --border-radius-lg: 12px;
   --border-radius-xl: 16px;
 
-  /* 阴影 */
-  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.06);
+  /* 阴影 - 多层级渲染以获得更平滑的深度感 */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.02);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 4px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05);
 
-  /* 过渡动效 */
-  --transition-fast: 0.12s ease;
-  --transition-base: 0.2s ease;
-  --transition-slow: 0.3s ease;
+  /* 玻璃拟态基础色 */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.3);
+
+  /* 过渡动效 - 使用更自然的贝塞尔曲线 */
+  --transition-fast: 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* 间距 */
   --spacing-xs: 4px;
@@ -89,33 +93,37 @@
 /* ==================== 深色模式 ==================== */
 
 [data-theme='dark'] {
-  --bg-app: #0e1117;
-  --bg-primary: #1a1d23;
-  --bg-secondary: #21252e;
-  --bg-sidebar: #161920;
-  --bg-sidebar-hover: #1e222b;
-  --bg-sidebar-active: rgba(20, 86, 255, 0.15);
-  --bg-input: #21252e;
+  --bg-app: #121212;           /* 暗夜极致黑 */
+  --bg-primary: #17171a;       /* Arco 标准深色背景 */
+  --bg-secondary: #232324;     /* 卡片/悬浮层背景 */
+  --bg-sidebar: #232324;       /* 侧边栏与卡片一致 */
+  --bg-sidebar-hover: #2e2e30;
+  --bg-sidebar-active: rgba(22, 93, 255, 0.15);
+  --bg-input: #2a2a2b;
 
-  --text-primary: #e5e8ef;
-  --text-secondary: #8f959e;
-  --text-tertiary: #646a73;
-  --text-disabled: #3d4354;
+  --text-primary: #f5f5f5;
+  --text-secondary: #86909c;
+  --text-tertiary: #4e5969;
+  --text-disabled: #333333;
   --text-inverse: #ffffff;
-  --text-link: #5684ff;
+  --text-link: #4080ff;
 
-  --border-color: #2a2f3d;
-  --border-color-strong: #363c4e;
+  --border-color: #313133;     /* 非常克制的暗色分割 */
+  --border-color-strong: #484849;
 
-  --primary-color: #4d7cff;
-  --primary-hover: #3d6aee;
-  --primary-active: #2d5add;
-  --primary-bg: rgba(77, 124, 255, 0.12);
-  --primary-bg-hover: rgba(77, 124, 255, 0.18);
+  --primary-color: #165dff;    /* 科技蓝 */
+  --primary-hover: #4080ff;
+  --primary-active: #0e42d2;
+  --primary-bg: rgba(22, 93, 255, 0.1);
+  --primary-bg-hover: rgba(22, 93, 255, 0.2);
 
-  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.28);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.36);
+  --shadow-sm: 0 4px 10px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.4);
+
+  /* 玻璃拟态深色基础色 - 更加克制 */
+  --glass-bg: rgba(23, 23, 26, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.05);
 }
 
 /* ==================== 重置 ==================== */
@@ -250,6 +258,32 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* 玻璃拟态工具类 */
+.glass-effect {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid var(--glass-border);
+}
+
+.premium-card {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+  border: 1px solid var(--border-color);
+}
+
+.premium-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--primary-bg-hover);
+}
+
+.subtle-gradient {
+  background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
 }
 
 /* ==================== Naive UI 主题覆盖 ==================== */

@@ -1,5 +1,5 @@
 <template>
-  <header class="app-header">
+  <header class="app-header glass-effect">
     <div class="header-left">
       <n-breadcrumb class="breadcrumb-container">
         <n-breadcrumb-item @click="router.push('/')">首页</n-breadcrumb-item>
@@ -21,7 +21,7 @@
 
       <div class="divider"></div>
 
-      <n-tag :bordered="false" type="info" size="small" class="version-tag">
+      <n-tag :bordered="false" type="primary" size="small" class="version-tag" round>
         v{{ appVersion }}
       </n-tag>
     </div>

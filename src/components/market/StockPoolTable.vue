@@ -83,6 +83,9 @@ import {
 } from 'naive-ui'
 import { RefreshOutline, Sync, Analytics, Flame } from '@vicons/ionicons5'
 import { formatDate } from '@/utils/format'
+import { useStockActions } from '@/composables/useStockActions'
+
+const { openInTdx } = useStockActions()
 
 interface StockPoolRow {
   symbol: string
@@ -239,7 +242,7 @@ const columns: DataTableColumns<DisplayRow> = [
     width: 120,
     fixed: 'left',
     render: (row) => h('div', { 
-      style: 'cursor: pointer; color: #18a058; font-weight: bold;',
+      class: 'stock-clickable',
       onClick: () => handleStockClick(row.symbol)
     }, row.stock_name)
   },
@@ -403,10 +406,20 @@ const handleSync = async () => {
 }
 
 const handleStockClick = (symbol: string) => {
-  console.log('Stock clicked:', symbol)
+  openInTdx(symbol)
 }
 
-onMounted(() => {
+onMounted(async () => {
+  loading.value = true
+  try {
+    const latestDay = await (window as any).electronAPI.db.getLatestTradingDay()
+    if (latestDay && latestDay.date) {
+      // 避免时区偏移：使用 '/' 替换 '-' 让 Date 按本地时间解析 YYYY/MM/DD
+      selectedDateTs.value = new Date(latestDay.date.replace(/-/g, '/')).getTime()
+    }
+  } catch (err) {
+    console.error('Failed to get latest trading day in StockPoolTable:', err)
+  }
   fetchData()
 })
 </script>

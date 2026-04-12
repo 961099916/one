@@ -184,11 +184,26 @@ const { loading, sentimentMatrix, loadData } = useSentimentCycle()
 
 const tdxPath = computed(() => appStore.settings.tdxPath)
 
-onMounted(() => loadData(displayLimit.value))
+const latestTradingDate = ref('')
+
+onMounted(async () => {
+  try {
+    const latestDay = await window.electronAPI.db.getLatestTradingDay()
+    if (latestDay) {
+      latestTradingDate.value = latestDay.date
+    }
+  } catch (e) {
+    console.error('Failed to get latest trading day:', e)
+  }
+  loadData(displayLimit.value)
+})
 
 const goToSettings = () => router.push('/settings')
 
-const isToday = (date: string) => date === new Date().toISOString().split('T')[0]
+const isToday = (date: string) => {
+  if (latestTradingDate.value) return date === latestTradingDate.value
+  return date === new Date().toISOString().split('T')[0]
+}
 
 const formatAmount = (val?: number) => {
   if (!val) return '-'
@@ -275,7 +290,7 @@ const goToMarketData = () => router.push('/market/data')
   padding: 24px;
   display: flex;
   flex-direction: column;
-  background-color: #f1f5f9;
+  background-color: var(--bg-app);
   overflow: hidden;
 }
 
@@ -308,11 +323,11 @@ const goToMarketData = () => router.push('/market/data')
 /* 表格样式 */
 .table-wrapper {
   flex: 1;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
   overflow: auto;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
 }
 
 .sentiment-table {
@@ -325,18 +340,19 @@ const goToMarketData = () => router.push('/market/data')
 .sentiment-table thead th {
   position: sticky;
   top: 0;
-  background: #f8fafc;
-  padding: 12px 8px;
-  font-weight: 800;
-  color: #475569;
-  border-bottom: 2px solid #e2e8f0;
+  background: var(--bg-secondary);
+  padding: 14px 8px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border-color);
   z-index: 10;
   white-space: nowrap;
+  font-size: 12px;
 }
 
 .sentiment-table td {
-  padding: 8px 6px;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--border-color-light);
   white-space: nowrap;
 }
 

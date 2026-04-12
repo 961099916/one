@@ -49,14 +49,14 @@
               <div class="connector-line"></div>
               <n-card 
                 size="small" 
-                class="plate-card"
+                class="plate-card premium-card"
                 :class="{ 'has-limit-up': plate.limitUpCount > 0 }"
                 :style="getPlateCardStyle(plate)"
               >
                 <div class="plate-name">{{ plate.name }}</div>
                 <div class="plate-stats">
                   <n-badge :value="plate.limitUpCount" :max="99" type="error" :show="plate.limitUpCount > 0" />
-                  <n-text depth="3" style="font-size: 10px; margin-left: 4px">
+                  <n-text depth="3" class="stock-count-text">
                     {{ plate.stockCount }}只相关
                   </n-text>
                 </div>
@@ -159,8 +159,10 @@ import {
 } from 'naive-ui'
 import { RefreshOutline } from '@vicons/ionicons5'
 import type { SurgeStockRow } from '../../electron/infrastructure/database/types'
-import { log } from '@/utils/logger'
 import { useAppStore } from '@/stores'
+import { useStockActions } from '@/composables/useStockActions'
+
+const { openInTdx } = useStockActions()
 import VChart from 'vue-echarts'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
@@ -328,10 +330,17 @@ const loadTimeline = async () => {
 }
 
 const syncTodayData = async () => {
-  const today = new Date().toLocaleDateString('sv')
   loading.value = true
   try {
-    const res = await window.electronAPI.db.syncSurgeData(today)
+    let syncDate = new Date().toLocaleDateString('sv')
+    
+    // 如果今天还没开盘或没数据，尝试同步最近一个交易日的数据
+    const latestDay = await window.electronAPI.db.getLatestTradingDay()
+    if (latestDay) {
+      syncDate = latestDay.date
+    }
+
+    const res = await window.electronAPI.db.syncSurgeData(syncDate)
     if (res.success) {
       message.success('同步成功')
       await loadTimeline()
@@ -374,16 +383,8 @@ const rowProps = (row: SurgeStockRow) => {
   }
 }
 
-const handleStockClick = async (row: SurgeStockRow) => {
-  try {
-    // 转发给主进程唤起通达信
-    const res = await window.electronAPI.tdx.openStock(row.symbol)
-    if (!res.success) {
-      message.warning(`唤起通达信失败: ${res.error || '可能是未注册 tdx:// 协议'}`)
-    }
-  } catch (err) {
-    message.error('由于系统限制，无法唤起外部程序')
-  }
+const handleStockClick = (row: SurgeStockRow) => {
+  openInTdx(row.symbol)
 }
 
 // 全局过滤与预处理后的时间轴数据
@@ -458,8 +459,7 @@ const columns = [
           NText, 
           { 
             strong: true, 
-            style: 'color: #ef4444; border-bottom: 1px dashed #ef4444; cursor: pointer;',
-            class: 'stock-click-link',
+            class: 'stock-clickable',
             onClick: (e: MouseEvent) => {
               e.stopPropagation()
               handleStockClick(row)
@@ -623,7 +623,7 @@ const updateChart = async (stock?: SurgeStockRow) => {
 
     chartOption.value = {
       animation: false,
-      color: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'],
+      color: ['#165dff', '#f5222d', '#722ed1', '#13c2c2', '#eb2f96', '#fa8c16'],
       tooltip: {
         trigger: 'axis',
         confine: true,
@@ -662,7 +662,7 @@ const updateChart = async (stock?: SurgeStockRow) => {
       yAxis: {
         type: 'value',
         axisLabel: { formatter: '{value}%' },
-        splitLine: { lineStyle: { type: 'dashed', color: '#f1f5f9' } }
+        splitLine: { lineStyle: { type: 'dashed', color: 'var(--border-color)' } }
       },
       series: series
     }
@@ -677,8 +677,8 @@ const updateChart = async (stock?: SurgeStockRow) => {
 const getPlateCardStyle = (plate: PlateDetail) => {
   const intensity = Math.min(plate.limitUpCount / 5, 1)
   return {
-    borderLeft: `5px solid rgba(239, 68, 68, ${0.1 + intensity * 0.9})`,
-    backgroundColor: intensity > 0.4 ? '#fff5f5' : '#fff'
+    borderLeft: `3px solid rgba(22, 93, 255, ${0.3 + intensity * 0.7})`,
+    backgroundColor: intensity > 0.4 ? 'rgba(22, 93, 255, 0.04)' : 'var(--bg-primary)'
   }
 }
 
@@ -687,9 +687,22 @@ const formatDateStr = (date: string) => {
   return `${parts[1]}-${parts[2]}`
 }
 
-const isToday = (date: string) => date === new Date().toLocaleDateString('sv')
+const latestTradingDate = ref('')
 
-onMounted(() => {
+const isToday = (date: string) => {
+  if (latestTradingDate.value) return date === latestTradingDate.value
+  return date === new Date().toLocaleDateString('sv')
+}
+
+onMounted(async () => {
+  try {
+    const latestDay = await window.electronAPI.db.getLatestTradingDay()
+    if (latestDay) {
+      latestTradingDate.value = latestDay.date
+    }
+  } catch (e) {
+    console.error('Failed to get latest trading day:', e)
+  }
   loadTimeline()
 })
 </script>
@@ -697,32 +710,34 @@ onMounted(() => {
 <style scoped>
 .market-surge-review {
   height: 100%;
-  padding: 24px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  background-color: #f8fafc;
+  background-color: var(--bg-app);
   overflow: hidden;
   position: relative;
   box-sizing: border-box;
 }
 
 .board-header {
-  padding: 24px 30px;
-  background: #fff;
-  border-bottom: 2px solid #e2e8f0;
+  padding: 24px 40px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   position: relative;
+  box-shadow: var(--shadow-sm);
+  z-index: 100;
 }
 
 .title {
   margin: 0;
   font-size: 24px;
   font-weight: 800;
-  color: #1e293b;
-  letter-spacing: -1px;
+  color: var(--primary-color);
+  letter-spacing: 0.5px;
 }
 
 .header-actions {
@@ -737,7 +752,7 @@ onMounted(() => {
 
 .global-filter {
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 /* 全景滚动区 */
@@ -789,26 +804,28 @@ onMounted(() => {
 .date-text {
   font-size: 15px;
   font-weight: 800;
-  color: #475569;
+  color: var(--text-primary);
   margin-bottom: 12px;
-  background: #fff;
+  background: var(--bg-primary);
   padding: 4px 12px;
   border-radius: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .is-today .date-text {
   color: #fff;
-  background: #ef4444;
+  background: var(--primary-color);
+  border-color: var(--primary-color);
 }
 
 .date-dot {
-  width: 16px;
-  height: 16px;
-  background: #3b82f6;
-  border: 4px solid #fff;
+  width: 12px;
+  height: 12px;
+  background: var(--primary-color);
+  border: 4px solid var(--bg-app);
   border-radius: 50%;
-  box-shadow: 0 0 0 2px #3b82f6;
+  box-shadow: 0 0 0 1px var(--primary-color);
 }
 
 /* 贯穿全线的主轴 */
@@ -818,8 +835,9 @@ onMounted(() => {
   top: 105px;
   left: 0;
   right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #e2e8f0, #cbd5e1, #e2e8f0);
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--border-color-strong), transparent);
+  opacity: 0.3;
   z-index: 1;
 }
 
@@ -853,31 +871,33 @@ onMounted(() => {
 .connector-line {
   width: 2px;
   height: 12px;
-  background-color: #cbd5e1;
+  background-color: var(--border-color);
 }
 
 .plate-card {
   width: 180px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  border: 1px solid #e2e8f0;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
 }
 
 .plate-card:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-  border-color: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: var(--primary-color);
 }
 
 .plate-card.has-limit-up {
-  border-color: #fecaca;
+  border-color: rgba(22, 93, 255, 0.2);
+  background: var(--bg-primary);
 }
 
 .plate-name {
   font-size: 14px;
   font-weight: 700;
-  color: #334155;
+  color: var(--text-primary);
   margin-bottom: 4px;
 }
 
@@ -914,7 +934,7 @@ onMounted(() => {
 .plate-title {
   font-size: 20px;
   font-weight: 800;
-  color: #1e293b;
+  color: var(--primary-color);
 }
 
 .date-tag {
@@ -926,16 +946,17 @@ onMounted(() => {
   display: block;
   margin-bottom: 20px;
   padding: 12px;
-  background: #f8fafc;
+  background: var(--bg-secondary);
   border-radius: 8px;
   line-height: 1.6;
+  color: var(--text-secondary);
 }
 
 /* 详情图表区域 */
 .chart-container {
   height: 340px;
-  background: #fff;
-  border: 1px solid #f1f5f9;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   margin-bottom: 24px;
   display: flex;
@@ -947,11 +968,11 @@ onMounted(() => {
 .chart-toolbar {
   height: 40px;
   padding: 0 16px;
-  background: #f8fafc;
+  background: var(--bg-secondary);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .active-stock-label {

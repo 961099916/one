@@ -65,5 +65,19 @@ export const tradingDayRepository = {
       LIMIT ?
     `)
     return stmt.all(limit) as TradingDayRow[]
+  },
+
+  /**
+   * 获取最近一个交易日
+   */
+  getLatestTradingDay(): TradingDayRow | undefined {
+    const db = getDB()
+    const stmt = db.prepare(`
+      SELECT * FROM trading_days 
+      WHERE is_trading = 1 
+      ORDER BY date DESC 
+      LIMIT 1
+    `)
+    return stmt.get() as TradingDayRow | undefined
   }
 }
