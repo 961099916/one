@@ -8,16 +8,16 @@ import type { Component } from 'vue'
 // ==================== 应用信息 ====================
 
 /** 应用名称 */
-export const APP_NAME = 'One AI'
+export const APP_NAME = '壹复盘'
 
 /** 应用版本 */
 export const APP_VERSION = '1.0.0'
 
 /** 应用描述 */
-export const APP_DESCRIPTION = '本地 LLM 聊天助手'
+export const APP_DESCRIPTION = '专业 A 股短线复盘与智能分析平台'
 
 /** 作者信息 */
-export const APP_AUTHOR = 'One AI Team'
+export const APP_AUTHOR = 'One Review Team'
 
 /** GitHub 仓库地址 */
 export const APP_GITHUB_URL = ''

@@ -5,7 +5,7 @@
         <library-outline />
       </n-icon>
     </div>
-    <span v-show="!isCollapse" class="logo-text">One AI</span>
+    <span v-show="!isCollapse" class="logo-text">壹复盘</span>
   </div>
 </template>
 
@@ -46,7 +46,7 @@ function handleClick() {
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, #165dff, #3c7eff);
+  background: linear-gradient(135deg, #f5222d, #165dff);
   border-radius: 6px;
   color: #fff;
   box-shadow: 0 4px 12px rgba(22, 93, 255, 0.2);

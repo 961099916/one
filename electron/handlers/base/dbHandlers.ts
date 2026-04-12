@@ -9,6 +9,7 @@ import { sessionOps, messageOps, marketDataOps, tradingDayOps, stockPoolOps, sur
 import { appConfigOps } from '../../infrastructure/store'
 import { IpcChannel } from '../../constants'
 import { XuanguBaoService } from '../../services/integration/xuangubaoService'
+import { TdxService } from '../../services/integration/tdxService'
 import log from 'electron-log'
 
 /**
@@ -311,7 +312,7 @@ export function initDbHandlers(): void {
       try {
         const tdxPath = appConfigOps.get('tdxPath' as any)
         if (tdxPath) {
-          const tdxService = require('../../services/integration/tdxService').TdxService.getInstance()
+          const tdxService = TdxService.getInstance()
           
           // 获取大盘成交额与上证涨幅
           tdxStats = await tdxService.getIndicesStats(tdxPath, limit + 1)

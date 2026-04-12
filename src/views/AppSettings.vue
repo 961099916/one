@@ -86,7 +86,7 @@
         <div class="setting-row">
           <div class="setting-info">
             <span class="setting-label">开机自动启动</span>
-            <span class="setting-desc">登录系统时自动启动 One AI</span>
+            <span class="setting-desc">登录系统时自动启动 壹复盘</span>
           </div>
           <label class="toggle">
             <input

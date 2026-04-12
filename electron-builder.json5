@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "com.one.ai",
-  "productName": "One AI",
+  "appId": "com.onereview.stock",
+  "productName": "壹复盘",
   "asar": true,
   "directories": {
     "output": "release/${version}"

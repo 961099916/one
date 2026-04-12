@@ -8,8 +8,8 @@
         </n-icon>
       </div>
 
-      <h1 class="app-name">One AI</h1>
-      <p class="app-desc">本地大模型对话助手 · 离线运行</p>
+      <h1 class="app-name">壹复盘</h1>
+      <p class="app-desc">专业 A 股短线复盘与智能分析平台</p>
       <div class="version-badge">v{{ envInfo.appVersion || '—' }}</div>
 
       <!-- 环境信息 -->
@@ -136,7 +136,7 @@
       </div>
 
       <!-- 版权 -->
-      <p class="copyright">© {{ currentYear }} One AI. All rights reserved.</p>
+      <p class="copyright">© {{ currentYear }} 壹复盘 Team. All rights reserved.</p>
     </div>
   </div>
 </template>

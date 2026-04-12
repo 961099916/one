@@ -1,9 +1,9 @@
 {
-  "name": "one",
+  "name": "one-review",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "One AI - 本地 LLM 聊天应用（端侧离线版）",
+  "description": "专业 A 股短线复盘与智能助手",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/961099916/one.git"

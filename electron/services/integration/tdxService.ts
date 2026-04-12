@@ -63,29 +63,44 @@ export class TdxService {
   }
 
   /**
-   * 查找日线文件（兼容大小写）
+   * 大小写不敏感的路径匹配
    */
-  private findDayFile(vipdocPath: string, market: string, fileName: string): string | null {
-    const ldayPath = path.join(vipdocPath, market.toLowerCase(), 'lday')
-    if (!fs.existsSync(ldayPath)) return null
-
-    // 直接尝试全小写拼接
-    const fullPath = path.join(ldayPath, fileName.toLowerCase())
-    if (fs.existsSync(fullPath)) return fullPath
-
-    // 尝试大写
-    const upperPath = path.join(ldayPath, fileName.toUpperCase())
-    if (fs.existsSync(upperPath)) return upperPath
-
-    // 目录扫描（最慢但最稳）
+  private findPathCaseInsensitive(basePath: string, fileName: string): string | null {
+    if (!fs.existsSync(basePath)) return null
     try {
-      const files = fs.readdirSync(ldayPath)
+      const files = fs.readdirSync(basePath)
       const target = fileName.toLowerCase()
       const found = files.find(f => f.toLowerCase() === target)
-      return found ? path.join(ldayPath, found) : null
+      return found ? path.join(basePath, found) : null
     } catch {
       return null
     }
+  }
+
+  /**
+   * 鲁棒的查找分时文件路径
+   */
+  private findMinuteFile(vipdocPath: string, market: string, code: string, period: '1' | '5'): string | null {
+    // 尝试不同的市场前缀猜测（bj, sh, sz）
+    const markets = [market.toLowerCase(), 'sh', 'sz', 'bj']
+    const ext = period === '1' ? 'lc1' : 'lc5'
+    
+    for (const m of markets) {
+      // 1. 查找市场目录
+      const marketPath = this.findPathCaseInsensitive(vipdocPath, m)
+      if (!marketPath) continue
+      
+      // 2. 查找 fzline 目录
+      const fzlinePath = this.findPathCaseInsensitive(marketPath, 'fzline')
+      if (!fzlinePath) continue
+      
+      // 3. 查找具体文件
+      const fileName = `${m}${code}.${ext}`
+      const filePath = this.findPathCaseInsensitive(fzlinePath, fileName)
+      if (filePath) return filePath
+    }
+    
+    return null
   }
 
   /**
@@ -95,12 +110,15 @@ export class TdxService {
     const { tdxPath, symbol, date, period = '5' } = params
     try {
       const vipdocPath = this.resolveVipdocPath(tdxPath)
-      const market = symbol.substring(0, 2).toLowerCase()
-      const code = symbol.substring(2)
-      const fileName = `${market}${code}.${period === '1' ? 'lc1' : 'lc5'}`
-      const filePath = path.join(vipdocPath, market, 'fzline', fileName)
-
-      if (!fs.existsSync(filePath)) return []
+      const rawMarket = symbol.substring(0, 2).toLowerCase()
+      const code = symbol.replace(/[^0-9]/g, '')
+      
+      const filePath = this.findMinuteFile(vipdocPath, rawMarket, code, period)
+      
+      if (!filePath) {
+        log.warn(`[TdxService] 分时文件不存在: symbol=${symbol}, date=${date}, 尝试路径=${path.join(vipdocPath, rawMarket, 'fzline')}`)
+        return []
+      }
 
       const buffer = fs.readFileSync(filePath)
       const recordSize = 32
@@ -126,7 +144,10 @@ export class TdxService {
         }
       }
       return results
-    } catch { return [] }
+    } catch (err) { 
+      log.error(`[TdxService] 读取分时数据失败: ${err instanceof Error ? err.message : String(err)}`)
+      return [] 
+    }
   }
 
   async openStock(symbol: string, tdxPath?: string) {
@@ -158,11 +179,21 @@ export class TdxService {
 
   async getDayData(tdxPath: string, symbol: string, limit: number = 30): Promise<TdxDayData[]> {
     const vipdocPath = this.resolveVipdocPath(tdxPath)
-    const market = symbol.substring(0, 2)
-    const fileName = `${symbol.toLowerCase()}.day`
-    const filePath = this.findDayFile(vipdocPath, market, fileName)
+    const market = symbol.substring(0, 2).toLowerCase()
+    const code = symbol.replace(/[^0-9]/g, '')
+    const marketPath = this.findPathCaseInsensitive(vipdocPath, market)
+    if (!marketPath) return []
+    
+    const ldayPath = this.findPathCaseInsensitive(marketPath, 'lday')
+    if (!ldayPath) return []
+    
+    const fileName = `${market}${code}.day`
+    const filePath = this.findPathCaseInsensitive(ldayPath, fileName)
 
-    if (!filePath) return []
+    if (!filePath) {
+      log.warn(`[TdxService] 日线文件不存在: symbol=${symbol}, 尝试路径=${path.join(vipdocPath, market, 'lday')}`)
+      return []
+    }
     const buffer = fs.readFileSync(filePath)
     const recordSize = 32
     const count = Math.floor(buffer.length / recordSize)
@@ -210,12 +241,16 @@ export class TdxService {
     const vipdocPath = this.resolveVipdocPath(tdxPath)
     if (!fs.existsSync(vipdocPath)) return results
 
-    const markets = ['sh', 'sz']
+    const markets = ['sh', 'sz', 'bj']
     const recordSize = 32
 
     for (const m of markets) {
-      const ldayPath = path.join(vipdocPath, m, 'lday')
-      if (!fs.existsSync(ldayPath)) continue
+      const marketPath = this.findPathCaseInsensitive(vipdocPath, m)
+      if (!marketPath) continue
+      
+      const ldayPath = this.findPathCaseInsensitive(marketPath, 'lday')
+      if (!ldayPath) continue
+      
       const files = fs.readdirSync(ldayPath).filter(f => f.toLowerCase().endsWith('.day'))
       
       for (const f of files) {

@@ -2,7 +2,7 @@
   <n-layout class="chat-root" :native-scrollbar="false">
     <n-layout-header bordered class="chat-header">
       <div class="header-content">
-        <h2 class="chat-title">{{ currentSession?.title || 'One AI' }}</h2>
+        <h2 class="chat-title">{{ currentSession?.title || '壹复盘' }}</h2>
         <n-tag v-if="activeModel" type="primary" size="small" round :bordered="false" class="model-tag">
           {{ activeModel }}
         </n-tag>

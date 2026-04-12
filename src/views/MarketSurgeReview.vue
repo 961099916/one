@@ -568,7 +568,7 @@ const updateChart = async (stock?: SurgeStockRow) => {
       }
     }
 
-    log.info('[MarketSurgeReview] 正在请求叠加分时数据, 目标数:', targets.length)
+    console.log('[MarketSurgeReview] 正在请求叠加分时数据, 目标数:', targets.length)
 
     const series: any[] = []
     const legendData: string[] = []
@@ -577,9 +577,11 @@ const updateChart = async (stock?: SurgeStockRow) => {
       let symbol = target.symbol.toUpperCase()
       if (symbol.endsWith('.SS') || symbol.endsWith('.SH')) symbol = 'SH' + symbol.split('.')[0]
       else if (symbol.endsWith('.SZ')) symbol = 'SZ' + symbol.split('.')[0]
+      else if (symbol.endsWith('.BJ')) symbol = 'BJ' + symbol.split('.')[0]
       else {
         const pureCode = symbol.replace(/[^0-9]/g, '')
         if (pureCode.startsWith('6')) symbol = 'SH' + pureCode
+        else if (pureCode.startsWith('8') || pureCode.startsWith('4')) symbol = 'BJ' + pureCode
         else symbol = 'SZ' + pureCode
       }
 
@@ -667,7 +669,7 @@ const updateChart = async (stock?: SurgeStockRow) => {
       series: series
     }
   } catch (err) {
-    log.error('加载分时对比失败', err)
+    console.error('加载分时对比失败', err)
     chartOption.value = null
   } finally {
     chartLoading.value = false
