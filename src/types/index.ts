@@ -93,6 +93,10 @@ export interface AppSettings {
   linkagePreference: 'tdx' | 'ths' | 'both'
   /** 网络代理设置 */
   proxy: ProxyConfig
+  /** 更新镜像设置 */
+  updateMirror: 'direct' | 'ghproxy' | 'custom'
+  /** 自定义镜像地址 */
+  customMirrorUrl: string
 }
 
 /** 窗口状态接口 */

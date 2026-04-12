@@ -64,6 +64,10 @@ export interface AppConfig {
 
   // 网络代理
   proxy: ProxyConfig
+
+  // 更新设置
+  updateMirror: 'direct' | 'ghproxy' | 'custom'
+  customMirrorUrl: string
 }
 
 // ==================== 默认配置 ====================
@@ -102,7 +106,9 @@ const defaultConfig: AppConfig = {
     protocol: 'http',
     host: '127.0.0.1',
     port: 7890
-  }
+  },
+  updateMirror: 'direct',
+  customMirrorUrl: ''
 }
 
 // ==================== Store 实例 ====================

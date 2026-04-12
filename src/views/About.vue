@@ -122,6 +122,17 @@
             查看日志
           </button>
         </div>
+
+        <!-- 错误提示辅助逻辑 -->
+        <div v-if="updateStatus === 'error'" class="update-error-tip">
+          <p v-if="appStore.updateInfo.message" class="error-msg">
+            {{ appStore.updateInfo.message }}
+          </p>
+          <div class="error-actions" v-if="!appStore.updateInfo.isAuthError">
+            <span class="tip-text">连接失败？尝试切换下载镜像：</span>
+            <router-link to="/settings" class="settings-link">前往设置</router-link>
+          </div>
+        </div>
       </div>
 
       <!-- 版权 -->
@@ -518,5 +529,40 @@ function formatSpeed(bps: number): string {
   font-size: 12px;
   color: var(--text-disabled);
   margin-top: 4px;
+}
+
+/* 错误提示辅助样式 */
+.update-error-tip {
+  margin-top: 8px;
+  padding: 10px;
+  background: rgba(255, 77, 79, 0.05);
+  border-radius: var(--border-radius-sm);
+  border: 1px dashed rgba(255, 77, 79, 0.2);
+  text-align: left;
+}
+
+.error-msg {
+  font-size: 12px;
+  color: var(--danger-color);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.error-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.settings-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.settings-link:hover {
+  text-decoration: underline;
 }
 </style>

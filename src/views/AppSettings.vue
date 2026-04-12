@@ -121,6 +121,37 @@
 
         <div class="setting-row">
           <div class="setting-info">
+            <span class="setting-label">GitHub 下载镜像</span>
+            <span class="setting-desc">当无法连接 GitHub 时，尝试使用镜像加速更新下载</span>
+          </div>
+          <select 
+            class="select-input" 
+            style="width: 140px"
+            :value="settings.updateMirror"
+            @change="e => updateSettings({ updateMirror: (e.target as HTMLSelectElement).value as any })"
+          >
+            <option value="direct">直接连接</option>
+            <option value="ghproxy">Ghproxy 镜像</option>
+            <option value="custom">自定义镜像</option>
+          </select>
+        </div>
+
+        <div v-if="settings.updateMirror === 'custom'" class="setting-row" style="padding-top: 0">
+          <div class="setting-info" style="flex: 1">
+            <input 
+              type="text" 
+              class="text-input" 
+              :value="settings.customMirrorUrl" 
+              placeholder="请输入镜像地址 (包含 latest.yml 的目录)"
+              @change="e => updateSettings({ customMirrorUrl: (e.target as HTMLInputElement).value })"
+            />
+          </div>
+        </div>
+
+        <div class="setting-divider" />
+
+        <div class="setting-row">
+          <div class="setting-info">
             <span class="setting-label">启动时自动加载模型</span>
             <span class="setting-desc">启动应用时自动载入上次选择的模型，会占用较多内存</span>
           </div>

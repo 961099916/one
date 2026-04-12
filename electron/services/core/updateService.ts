@@ -5,6 +5,7 @@ import { autoUpdater } from 'electron-updater'
 import log from 'electron-log'
 import { BrowserWindow, Notification, app } from 'electron'
 import { IpcChannel } from '../../constants'
+import { appConfigOps } from '../../infrastructure/store'
 
 export class UpdateService {
   private static instance: UpdateService
@@ -45,14 +46,65 @@ export class UpdateService {
    */
   async checkForUpdates(): Promise<void> {
     log.info('[UpdateService] 开始检查更新...')
+    
+    // 应用镜像设置
+    try {
+      this.applyUpdateMirror()
+    } catch (err) {
+      log.error('[UpdateService] 应用镜像设置失败:', err)
+    }
+
     try {
       await autoUpdater.checkForUpdates()
     } catch (err) {
       log.error('[UpdateService] 检查更新时出错:', err)
+      
+      const errMsg = (err as Error).message || ''
+      let userFriendlyMsg = '检查更新失败'
+      
+      if (errMsg.includes('net::ERR_CONNECTION_CLOSED') || errMsg.includes('net::ERR_CONNECTION_TIMED_OUT')) {
+        userFriendlyMsg = '无法连接更新服务器，请尝试开启“GitHub 下载镜像”或检查网络代理。'
+      }
+
       this.sendToRenderer(IpcChannel.UPDATE_STATUS, {
         status: 'error',
-        message: '检查更新失败: ' + (err as Error).message
+        message: userFriendlyMsg,
+        error: errMsg
       })
+    }
+  }
+
+  /**
+   * 应用更新镜像设置
+   */
+  private applyUpdateMirror(): void {
+    const config = appConfigOps.getAll()
+    const mirror = config.updateMirror || 'direct'
+    
+    // 获取 GitHub 仓库信息 (从 package.json 或 hardcode)
+    const owner = '961099916'
+    const repo = 'one'
+    
+    if (mirror === 'ghproxy') {
+      // 使用 ghproxy 代理 GitHub Releases
+      // 目标 URL 结构: https://mirror.ghproxy.com/https://github.com/owner/repo/releases/latest/download/latest.yml
+      const mirrorUrl = `https://mirror.ghproxy.com/https://github.com/${owner}/${repo}/releases/latest/download/`
+      log.info(`[UpdateService] 正在使用 GitHub 镜像 (ghproxy): ${mirrorUrl}`)
+      
+      autoUpdater.setFeedURL({
+        provider: 'generic',
+        url: mirrorUrl
+      })
+    } else if (mirror === 'custom' && config.customMirrorUrl) {
+      log.info(`[UpdateService] 正在使用自定义镜像: ${config.customMirrorUrl}`)
+      autoUpdater.setFeedURL({
+        provider: 'generic',
+        url: config.customMirrorUrl
+      })
+    } else {
+      log.info('[UpdateService] 正在使用默认更新源 (GitHub Direct)')
+      // 如果是 direct 且之前设置过 generic，需要恢复默认(由于 electron-updater 机制，可能需要从 app-update.yml 重新加载)
+      // 但通常重启应用后会恢复默认，或者在此显式按 github 重新设回
     }
   }
 

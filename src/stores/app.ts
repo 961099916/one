@@ -42,7 +42,9 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
     protocol: 'http',
     host: '127.0.0.1',
     port: 7890
-  }
+  },
+  updateMirror: 'direct',
+  customMirrorUrl: ''
 }
 
 export const useAppStore = defineStore(
@@ -82,6 +84,14 @@ export const useAppStore = defineStore(
 
     function updateSettings(newSettings: Partial<AppSettings>): void {
       settings.value = { ...settings.value, ...newSettings }
+      
+      // 同步到主进程 electron-store
+      if (window.electronAPI?.config) {
+        for (const [key, value] of Object.entries(newSettings)) {
+          window.electronAPI.config.set(key, value)
+        }
+      }
+
       if (newSettings.theme) uiService.applyTheme(newSettings.theme)
       if (newSettings.fontSize) {
         uiService.setCssVariable('--font-size-base', `${newSettings.fontSize}px`)
