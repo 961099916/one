@@ -154,6 +154,8 @@ export const RoutePath = {
   XUANGUBAO_LIMIT_DOWN: '/xuangubao/limit-down',
   /** 热点深度复盘 */
   XUANGUBAO_SURGE_REVIEW: '/xuangubao/surge-review',
+  /** 情绪周期表 */
+  XUANGUBAO_SENTIMENT_CYCLE: '/xuangubao/sentiment-cycle',
 } as const
 
 /** 路由名称常量 */
@@ -173,6 +175,8 @@ export const RouteName = {
   XUANGUBAO_STRONG_STOCK: 'XuanguBaoStrongStock',
   XUANGUBAO_LIMIT_DOWN: 'XuanguBaoLimitDown',
   XUANGUBAO_SURGE_REVIEW: 'XuanguBaoSurgeReview',
+  XUANGUBAO_CALENDAR: 'XuanguBaoCalendar',
+  XUANGUBAO_SENTIMENT_CYCLE: 'XuanguBaoSentimentCycle',
 } as const
 
 // ==================== 菜单配置 ====================

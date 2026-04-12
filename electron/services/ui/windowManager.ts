@@ -15,8 +15,12 @@ export async function createMainWindow(): Promise<BrowserWindow> {
     minWidth: WindowConfig.MIN_WIDTH,
     minHeight: WindowConfig.MIN_HEIGHT,
     show: false,
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
-    frame: process.platform !== 'darwin' ? false : true,
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
+    titleBarOverlay: process.platform === 'win32' ? {
+      color: '#1a1a2e',
+      symbolColor: '#ffffff',
+      height: 32
+    } : undefined,
     backgroundColor: '#1a1a2e',
     webPreferences: {
       preload: PRELOAD_PATH,

@@ -31,15 +31,15 @@ export interface MenuItem {
  */
 export const menuConfig: MenuItem[] = [
   {
-    path: RoutePath.HOME,
-    title: '首页',
-    icon: HomeOutline,
+    path: RoutePath.XUANGUBAO_SENTIMENT_CYCLE,
+    title: '情绪周期',
+    icon: HeartOutline,
     order: 1,
   },
   {
-    path: RoutePath.CHAT,
-    title: 'AI对话',
-    icon: ChatboxOutline,
+    path: RoutePath.XUANGUBAO_SURGE_REVIEW,
+    title: '热点复盘',
+    icon: Analytics,
     order: 2,
   },
   {
@@ -85,15 +85,9 @@ export const menuConfig: MenuItem[] = [
     order: 16,
   },
   {
-    path: RoutePath.XUANGUBAO_SURGE_REVIEW,
-    title: '热点复盘',
-    icon: Analytics,
-    order: 17,
-  },
-  {
-    path: '/xuangubao/sentiment-cycle',
-    title: '情绪周期',
-    icon: HeartOutline,
+    path: RoutePath.CHAT,
+    title: 'AI对话',
+    icon: ChatboxOutline,
     order: 18,
   },
   {

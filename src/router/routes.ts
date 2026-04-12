@@ -3,7 +3,6 @@
  */
 import type { RouteRecordRaw } from 'vue-router'
 import MainLayout from '@/layouts/MainLayout.vue'
-import Home from '@/views/Home.vue'
 import Chat from '@/views/Chat.vue'
 import SettingsLayout from '@/views/SettingsLayout.vue'
 import ModelSettings from '@/views/Settings.vue'
@@ -32,16 +31,8 @@ export const baseRoutes: AppRouteRecordRaw[] = [
   {
     path: '/',
     component: MainLayout,
-    redirect: RoutePath.HOME,
+    redirect: RoutePath.XUANGUBAO_SENTIMENT_CYCLE,
     children: [
-      {
-        path: RoutePath.HOME,
-        name: RouteName.HOME,
-        component: Home,
-        meta: {
-          title: '首页',
-        },
-      },
       {
         path: RoutePath.CHAT,
         name: RouteName.CHAT,
@@ -76,7 +67,7 @@ export const baseRoutes: AppRouteRecordRaw[] = [
           },
           {
             path: 'calendar',
-            name: 'XuanguBaoCalendar',
+            name: RouteName.XUANGUBAO_CALENDAR,
             component: () => import('@/views/TradingCalendar.vue'),
             meta: {
               title: '交易日历管理',
@@ -132,7 +123,7 @@ export const baseRoutes: AppRouteRecordRaw[] = [
           },
           {
             path: 'sentiment-cycle',
-            name: 'SentimentCycle',
+            name: RouteName.XUANGUBAO_SENTIMENT_CYCLE,
             component: () => import('@/views/SentimentCycle.vue'),
             meta: {
               title: '情绪周期表',

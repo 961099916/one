@@ -1,8 +1,10 @@
 import fs from 'fs'
 import path from 'path'
 import { shell } from 'electron'
+import { spawn, exec } from 'child_process'
 import log from 'electron-log'
 import { LogTags } from '../../constants'
+import { sendTextToWindowsProcess } from '../../utils/windowsAutomation'
 
 export interface TdxMinuteData {
   time: string
@@ -132,37 +134,26 @@ export class TdxService {
     
     log.info(`[TdxService] openStock: platform=${process.platform}, tdxPath=${tdxPath}, code=${code}`)
 
-    // 如果是 Windows 且提供了路径，优先使用路径直连
+    // 如果是 Windows 且提供了路径，使用 PowerShell 脚本直连（强制置顶并模拟键盘输入）
     if (process.platform === 'win32' && tdxPath && fs.existsSync(tdxPath)) {
       try {
-        const { spawn } = require('child_process')
-        log.info(`[TdxService] Attempting to open stock via spawn: ${tdxPath} /s ${code}`)
-        spawn(tdxPath, ['/s', code], { detached: true, stdio: 'ignore' }).unref()
-        return { success: true }
+        let exePath = tdxPath
+        if (fs.statSync(tdxPath).isDirectory()) {
+          exePath = path.join(tdxPath, 'tdxw.exe')
+        }
+
+        log.info(`[TdxService] Attempting to open stock via PowerShell: ${exePath} for ${code}`)
+        
+        const success = await sendTextToWindowsProcess(exePath, code, 'tdxw')
+        return { success, error: success ? undefined : '底层进程联动执行中断' }
       } catch (err) {
-        log.error(`[TdxService] Failed to spawn process: ${err instanceof Error ? err.message : String(err)}`)
+        log.error(`[TdxService] Failed to execute windows automation: ${err instanceof Error ? err.message : String(err)}`)
+        return { success: false, error: err instanceof Error ? err.message : String(err) }
       }
     }
 
-    // 对于 Mac，如果路径以 .app 结尾，我们可以尝试用 open 命令
-    if (process.platform === 'darwin' && tdxPath && tdxPath.endsWith('.app')) {
-      try {
-        const { exec } = require('child_process')
-        log.info(`[TdxService] Attempting to open stock via open command: ${tdxPath}`)
-        // 注意：Mac 版通达信可能不支持直接传参跳转，但我们可以先唤起
-        exec(`open -a "${tdxPath}"`) 
-        // 继续回退到协议跳转，因为协议跳转在软件打开的情况下通常能生效
-      } catch (err) {
-        log.error(`[TdxService] Failed to open .app: ${err instanceof Error ? err.message : String(err)}`)
-      }
-    }
-
-    // 回退到协议唤起
-    log.info(`[TdxService] Falling back to URL scheme: tdx://${code}`)
-    await shell.openExternal(`tdx://${code}`).catch((err) => {
-      log.error(`[TdxService] Failed to open external app: ${err.message}`)
-    })
-    return { success: true }
+    log.warn(`[TdxService] 未配置有效的通达信路径或处于非 Windows 平台，停止拉起`);
+    return { success: false, error: '请配置有效的通达信可执行路径，并确保当前环境支持此操作' }
   }
 
   async getDayData(tdxPath: string, symbol: string, limit: number = 30): Promise<TdxDayData[]> {

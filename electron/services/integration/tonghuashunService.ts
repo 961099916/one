@@ -1,3 +1,5 @@
+import fs from 'fs'
+import { spawn } from 'child_process'
 import { shell } from 'electron'
 import log from 'electron-log'
 import { TongHuaShunConfig, LogTags } from '../../constants'

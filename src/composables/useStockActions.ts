@@ -2,11 +2,9 @@
  * 股票通用操作组合式函数
  * 提供联动通达信、同花顺等外部软件的能力
  */
-import { useMessage } from 'naive-ui'
 import { useAppStore } from '@/stores'
 
 export function useStockActions() {
-  const message = useMessage()
   const appStore = useAppStore()
 
   /**
@@ -21,10 +19,12 @@ export function useStockActions() {
       const pureCode = symbol.replace(/[^0-9]/g, '')
       const res = await api.tdx.openStock(pureCode)
       if (!res.success) {
-        message.warning(`通达信联动失败: ${res.error || '无法唤起'}`)
+        console.warn(`[Tdx Linkage] 联动失败: ${res.error || '未知错误'}`)
+      } else {
+        console.info(`[Tdx Linkage] 联动成功: ${pureCode}`)
       }
     } catch (err) {
-      console.error('Failed to open TDX:', err)
+      console.error('[Tdx Linkage] 联动异常:', err)
     }
   }
 
@@ -40,10 +40,12 @@ export function useStockActions() {
       const pureCode = symbol.replace(/[^0-9]/g, '')
       const res = await api.ths.openStock(pureCode)
       if (!res.success) {
-        message.warning(`同花顺联动失败: ${res.error || '无法唤起'}`)
+        console.warn(`[Ths Linkage] 联动失败: ${res.error || '未知错误'}`)
+      } else {
+        console.info(`[Ths Linkage] 联动成功: ${pureCode}`)
       }
     } catch (err) {
-      console.error('Failed to open THS:', err)
+      console.error('[Ths Linkage] 联动异常:', err)
     }
   }
 
