@@ -151,18 +151,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, h } from 'vue'
+import { ref, onMounted, computed, h, nextTick } from 'vue'
 import { 
   useMessage, NTag, NText, NCard, NButton, 
   NDataTable, NEmpty, NIcon, NDrawer, NDrawerContent,
   NBadge, NCheckbox, NSpin
 } from 'naive-ui'
 import { RefreshOutline } from '@vicons/ionicons5'
-import type { SurgeStockRow } from '../../electron/infrastructure/database/types'
+import { normalizeStockSymbol } from '@common/utils/stockCode'
+import { marketApi } from '@/api'
+import type { SurgeStock, PlateDetail } from '@common/types/market'
 import { useAppStore } from '@/stores'
 import { useStockActions } from '@/composables/useStockActions'
+import { useSurgeDragScroll } from '@/composables/useSurgeDragScroll'
 
 const { handleStockClick: openInPreferredApp } = useStockActions()
+const { panoramaRef, isDraggingTimeline, getDragHasMoved, onTimelineMouseDown } = useSurgeDragScroll()
+import { useSurgeMinuteChart } from '@/composables/useSurgeMinuteChart'
+import { useSurgeTimeline } from '@/composables/useSurgeTimeline'
 import VChart from 'vue-echarts'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
@@ -188,33 +194,16 @@ const tdxPath = computed(() => appStore.settings.tdxPath)
 
 const message = useMessage()
 
-// 状态定义
-interface PlateDetail extends any {
-  stockCount: number
-  limitUpCount: number
-  stocks: SurgeStockRow[]
-}
-
-interface TimelineDay {
-  date: string
-  plates: PlateDetail[]
-}
-
-const timelineData = ref<TimelineDay[]>([])
-const loading = ref(false)
 const showDrawer = ref(false)
 const activePlate = ref<PlateDetail | null>(null)
 const activeDate = ref('')
-const activeStock = ref<SurgeStockRow | null>(null)
 const hideST = ref(true)
 
-// 图表相关
-const chartOption = ref<any>(null)
-const chartLoading = ref(false)
+const { loading, timelineData, loadTimeline, syncTodayData } = useSurgeTimeline()
 
-const drawerWidth = ref(800) /* 增加列后宽度稍大 */
+const drawerWidth = ref(800)
 let isResizing = false
-const overlayN = ref(0) // 叠加前N个，0为全部
+const overlayN = ref(0)
 
 const onResizerMouseDown = (e: MouseEvent) => {
   isResizing = true
@@ -240,128 +229,14 @@ const onResizerMouseUp = () => {
   document.body.style.userSelect = ''
 }
 
-// 时间轴水平拖拽相关
-const panoramaRef = ref<HTMLElement | null>(null)
-const isDraggingTimeline = ref(false)
-let dragStartX = 0
-let dragStartScrollLeft = 0
-let dragHasMoved = false
-
-const onTimelineMouseDown = (e: MouseEvent) => {
-  if (!panoramaRef.value || e.button !== 0) return 
-  
-  // 排除掉卡片点击，只有点击空白或包裹层才触发
-  isDraggingTimeline.value = true
-  dragHasMoved = false
-  dragStartX = e.pageX - panoramaRef.value.offsetLeft
-  dragStartScrollLeft = panoramaRef.value.scrollLeft
-  
-  window.addEventListener('mousemove', onTimelineMouseMove)
-  window.addEventListener('mouseup', onTimelineMouseUp)
-}
-
-const onTimelineMouseMove = (e: MouseEvent) => {
-  if (!isDraggingTimeline.value || !panoramaRef.value) return
-  
-  const x = e.pageX - panoramaRef.value.offsetLeft
-  const walk = (x - dragStartX) * 1.5 
-  
-  if (Math.abs(walk) > 5) {
-    dragHasMoved = true
-  }
-  
-  panoramaRef.value.scrollLeft = dragStartScrollLeft - walk
-}
-
-const onTimelineMouseUp = () => {
-  isDraggingTimeline.value = false
-  window.removeEventListener('mousemove', onTimelineMouseMove)
-  window.removeEventListener('mouseup', onTimelineMouseUp)
-}
-
-// ---------------- 数据加载与预处理 ----------------
-
-const loadTimeline = async () => {
-  loading.value = true
-  try {
-    const dates = await window.electronAPI.db.getSurgeHistoricalDates()
-    const detailPromises = dates.map(async (date) => {
-      const pData = await window.electronAPI.db.getSurgePlates({ date })
-      const sData = await window.electronAPI.db.getSurgeStocks({ date })
-      
-      const platesWithMetadata = pData.map(p => {
-        const relatedStocks = sData.filter(s => {
-          try { return JSON.parse(s.plate_ids || '[]').includes(p.plate_id) } 
-          catch { return false }
-        })
-        const limitUpCount = relatedStocks.filter(s => s.is_limit_up).length
-        return {
-          ...p,
-          stockCount: relatedStocks.length,
-          limitUpCount: limitUpCount,
-          stocks: relatedStocks
-        }
-      })
-      
-      // 板块排序逻辑：同一天内按涨停股数降序排列
-      platesWithMetadata.sort((a, b) => b.limitUpCount - a.limitUpCount || b.stockCount - a.stockCount)
-      
-      return { date, plates: platesWithMetadata }
-    })
-
-    const results = await Promise.all(detailPromises)
-    // 调整为升序排序：从左往右（旧 -> 新）
-    timelineData.value = results.sort((a, b) => a.date.localeCompare(b.date))
-    
-    // 自动滚动到最右侧（最新数据）
-    import('vue').then(({ nextTick }) => {
-      nextTick(() => {
-        const scrollArea = document.querySelector('.panorama-scroll-area')
-        if (scrollArea) {
-          scrollArea.scrollLeft = scrollArea.scrollWidth
-        }
-      })
-    })
-  } catch (err) {
-    message.error('看板加载失败')
-  } finally {
-    loading.value = false
-  }
-}
-
-const syncTodayData = async () => {
-  loading.value = true
-  try {
-    let syncDate = new Date().toLocaleDateString('sv')
-    
-    // 如果今天还没开盘或没数据，尝试同步最近一个交易日的数据
-    const latestDay = await window.electronAPI.db.getLatestTradingDay()
-    if (latestDay) {
-      syncDate = latestDay.date
-    }
-
-    const res = await window.electronAPI.db.syncSurgeData(syncDate)
-    if (res.success) {
-      message.success('同步成功')
-      await loadTimeline()
-    } else {
-      message.error('同步失败')
-    }
-  } finally {
-    loading.value = false
-  }
-}
-
-// ---------------- 详情抽屉与排序过滤 ----------------
 
 const openDetail = (plate: PlateDetail, date: string) => {
-  if (dragHasMoved) return // 拖拽时不触发点击
+  if (getDragHasMoved()) return
   
   activePlate.value = plate
   activeDate.value = date
   showDrawer.value = true
   
-  // 默认选中第一个标的显示分时
   if (plate.stocks.length > 0) {
     const list = [...plate.stocks].sort((a, b) => b.is_limit_up - a.is_limit_up)
     updateChart(list[0])
@@ -370,28 +245,24 @@ const openDetail = (plate: PlateDetail, date: string) => {
   }
 }
 
-const rowProps = (row: SurgeStockRow) => {
+const rowProps = (row: SurgeStock) => {
   return {
     style: 'cursor: pointer;',
     onClick: (e: MouseEvent) => {
-      // 如果点击的是股票名称（通过类名判断），则不更新图表，而是由 render 函数中的点击事件处理
       const target = e.target as HTMLElement
       if (target.classList.contains('stock-click-link')) return
-      
       updateChart(row)
     }
   }
 }
 
-const handleStockClick = (row: SurgeStockRow) => {
+const handleStockClick = (row: SurgeStock) => {
   openInPreferredApp(row.symbol)
 }
 
-// 全局过滤与预处理后的时间轴数据
 const processedTimelineData = computed(() => {
   return timelineData.value.map(day => {
     const processedPlates = day.plates.map(plate => {
-      // 执行 ST 过滤
       let filteredStocks = plate.stocks
       if (hideST.value) {
         filteredStocks = filteredStocks.filter(s => !s.stock_name.includes('ST'))
@@ -402,41 +273,27 @@ const processedTimelineData = computed(() => {
         ...plate,
         stockCount: filteredStocks.length,
         limitUpCount: limitUpCount,
-        filteredStocks // 保存过滤后的列表供抽屉使用
+        filteredStocks
       }
     })
     
-    // 过滤后重新排序：按涨停股数降序
     const sortedPlates = [...processedPlates].sort((a, b) => b.limitUpCount - a.limitUpCount || b.stockCount - a.stockCount)
-    
     return { ...day, plates: sortedPlates }
   })
 })
 
 const sortedStocks = computed(() => {
-  // 从 processedTimelineData 中找到当前激活的板块数据（确保过滤逻辑同步）
   if (!activePlate.value) return []
-  
   const currentDay = processedTimelineData.value.find(d => d.date === activeDate.value)
   const currentPlate = currentDay?.plates.find(p => p.plate_id === activePlate.value?.plate_id)
-  
   if (!currentPlate) return []
   
-  let list = [...currentPlate.filteredStocks]
-
-  // 深度排序
+  let list = [...(currentPlate.filteredStocks || [])]
   return list.sort((a, b) => {
-    const getBoardCount = (row: any) => {
-      try {
-        const raw = JSON.parse(row.raw_data || '{}')
-        return raw.limit_up_days || 0
-      } catch { return 0 }
+    const getBoardCount = (row: SurgeStock) => {
+      return row.parsedRawData.limit_up_days || 0
     }
-    
-    if (a.is_limit_up !== b.is_limit_up) {
-      return b.is_limit_up - a.is_limit_up
-    }
-    
+    if (a.is_limit_up !== b.is_limit_up) return b.is_limit_up - a.is_limit_up
     if (a.is_limit_up) {
       const countA = getBoardCount(a)
       const countB = getBoardCount(b)
@@ -453,13 +310,13 @@ const columns = [
     title: '股票',
     key: 'stock_name',
     width: 140,
-    render(row: any) {
+    render(row: SurgeStock) {
       return h('div', [
         h(
           NText, 
           { 
             strong: true, 
-            class: 'stock-clickable',
+            class: 'stock-clickable stock-click-link',
             onClick: (e: MouseEvent) => {
               e.stopPropagation()
               handleStockClick(row)
@@ -475,20 +332,17 @@ const columns = [
     title: '高度',
     key: 'height',
     width: 70,
-    render(row: any) {
+    render(row: SurgeStock) {
       if (!row.is_limit_up) return null
-      try {
-        const raw = JSON.parse(row.raw_data || '{}')
-        const count = raw.limit_up_days || 1
-        return h(NTag, { type: 'error', size: 'tiny', bordered: false, round: true }, { default: () => `${count}板` })
-      } catch { return null }
+      const count = row.parsedRawData.limit_up_days || 1
+      return h(NTag, { type: 'error', size: 'tiny', bordered: false, round: true }, { default: () => `${count}板` })
     }
   },
   {
     title: '涨跌幅',
     key: 'change_percent',
     width: 80,
-    render(row: any) {
+    render(row: SurgeStock) {
       const val = row.change_percent || 0
       const color = val > 0 ? '#ef4444' : val < 0 ? '#22c55e' : 'inherit'
       return h('span', { style: { color, fontWeight: 'bold' } }, 
@@ -500,29 +354,25 @@ const columns = [
     title: '换手',
     key: 'turnover',
     width: 70,
-    render(row: any) {
-      try {
-        const raw = JSON.parse(row.raw_data || '{}')
-        return h(NText, { depth: 3, style: 'font-size: 11px' }, { default: () => `${(raw.turnover_ratio * 100 || 0).toFixed(2)}%` })
-      } catch { return '-' }
+    render(row: SurgeStock) {
+      const turnover = (row.parsedRawData.turnover_ratio || 0) * 100
+      return h(NText, { depth: 3, style: 'font-size: 11px' }, { default: () => `${turnover.toFixed(2)}%` })
     }
   },
   {
     title: '市值',
     key: 'm_cap',
     width: 70,
-    render(row: any) {
-      try {
-        const raw = JSON.parse(row.raw_data || '{}')
-        return h(NText, { depth: 3, style: 'font-size: 11px' }, { default: () => `${(raw.total_capital / 100000000 || 0).toFixed(1)}亿` })
-      } catch { return '-' }
+    render(row: SurgeStock) {
+      const mCap = (row.parsedRawData.total_capital || 0) / 100000000
+      return h(NText, { depth: 3, style: 'font-size: 11px' }, { default: () => `${mCap.toFixed(1)}亿` })
     }
   },
   {
     title: '时点',
     key: 'enter_time',
     width: 70,
-    render(row: any) {
+    render(row: SurgeStock) {
       if (!row.enter_time) return '-'
       const date = new Date(row.enter_time * 1000)
       return h(NText, { depth: 3, style: 'font-size: 11px' }, { default: () => date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) })
@@ -531,150 +381,16 @@ const columns = [
   {
     title: '涨停原因',
     key: 'reason',
-    render(row: any) {
-      try {
-        const raw = JSON.parse(row.raw_data || '{}')
-        const reason = raw.surge_reason?.stock_reason || row.description || '-'
-        return h(NText, { depth: 3, style: 'font-size: 12px' }, { default: () => reason })
-      } catch { return row.description || '-' }
+    render(row: SurgeStock) {
+      const reason = row.parsedRawData.surge_reason?.stock_reason || row.description || '-'
+      return h(NText, { depth: 3, style: 'font-size: 12px' }, { default: () => reason })
     }
   }
 ]
 
-// ---------------- 分时图核心逻辑 ----------------
+const { chartOption, chartLoading, activeStock, updateChart } = useSurgeMinuteChart(tdxPath, activeDate, overlayN, sortedStocks)
 
-const updateChart = async (stock?: SurgeStockRow) => {
-  if (stock) activeStock.value = stock
-  if (!activePlate.value || !tdxPath.value) return
-
-  chartLoading.value = true
-  try {
-    // 1. 确定要显示的个股列表
-    let targets: SurgeStockRow[] = []
-    if (overlayN.value === 0) {
-      // 0 代表展示全部
-      targets = sortedStocks.value
-    } else {
-      // N > 0 代表总展示数量（含当前点击的一只）
-      if (activeStock.value) {
-        targets.push(activeStock.value)
-      }
-      
-      // 用板块内排名靠前的个股补齐剩余名额
-      const others = sortedStocks.value.filter(s => s.symbol !== activeStock.value?.symbol)
-      const needReplaceCount = overlayN.value - targets.length
-      if (needReplaceCount > 0) {
-        targets.push(...others.slice(0, needReplaceCount))
-      }
-    }
-
-    console.log('[MarketSurgeReview] 正在请求叠加分时数据, 目标数:', targets.length)
-
-    const series: any[] = []
-    const legendData: string[] = []
-
-    const fetchAll = targets.map(async (target) => {
-      let symbol = target.symbol.toUpperCase()
-      if (symbol.endsWith('.SS') || symbol.endsWith('.SH')) symbol = 'SH' + symbol.split('.')[0]
-      else if (symbol.endsWith('.SZ')) symbol = 'SZ' + symbol.split('.')[0]
-      else if (symbol.endsWith('.BJ')) symbol = 'BJ' + symbol.split('.')[0]
-      else {
-        const pureCode = symbol.replace(/[^0-9]/g, '')
-        if (pureCode.startsWith('6')) symbol = 'SH' + pureCode
-        else if (pureCode.startsWith('8') || pureCode.startsWith('4')) symbol = 'BJ' + pureCode
-        else symbol = 'SZ' + pureCode
-      }
-
-      const res = await window.electronAPI.tdx.getMinuteData({
-        tdxPath: tdxPath.value,
-        symbol,
-        date: activeDate.value,
-        period: '5'
-      }).catch(() => null)
-
-      if (res && Array.isArray(res) && res.length > 0) {
-        // 核心算法纠偏：使用昨日收盘价作为 0% 点
-        // refPrice = currentPrice / (1 + change_percent)
-        const currentPrice = target.price || res[res.length-1].close
-        const changePercent = target.change_percent || 0
-        const refPrice = currentPrice / (1 + changePercent)
-        
-        const data = res.map((item: any) => ({
-          name: item.time,
-          value: [item.time, ((item.close - refPrice) / refPrice * 100).toFixed(2)]
-        }))
-
-        legendData.push(target.stock_name)
-        series.push({
-          name: target.stock_name,
-          type: 'line',
-          showSymbol: false,
-          data,
-          lineStyle: { width: target.symbol === activeStock.value?.symbol ? 3 : 1.5 },
-          emphasis: { focus: 'series' }
-        })
-      }
-    })
-
-    await Promise.all(fetchAll)
-
-    if (series.length === 0) {
-      chartOption.value = null
-      return
-    }
-
-    chartOption.value = {
-      animation: false,
-      color: ['#165dff', '#f5222d', '#722ed1', '#13c2c2', '#eb2f96', '#fa8c16'],
-      tooltip: {
-        trigger: 'axis',
-        confine: true,
-        formatter: (params: any) => {
-          let res = `<div style="font-weight: bold; margin-bottom: 5px">${params[0].value[0]}</div>`
-          params.sort((a: any, b: any) => b.value[1] - a.value[1]).forEach((p: any) => {
-            res += `<div style="display: flex; justify-content: space-between; gap: 20px">
-              <span>${p.marker} ${p.seriesName}:</span>
-              <span style="font-weight: bold; color: ${p.value[1] >= 0 ? '#ef4444' : '#22c55e'}">${p.value[1]}%</span>
-            </div>`
-          })
-          return res
-        }
-      },
-      legend: {
-        top: 0,
-        type: 'scroll',
-        data: legendData
-      },
-      grid: {
-        top: 60,
-        left: 50,
-        right: 20,
-        bottom: 30
-      },
-      xAxis: {
-        type: 'time',
-        splitLine: { show: false },
-        axisLabel: {
-          formatter: (value: any) => {
-            const d = new Date(value)
-            return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`
-          }
-        }
-      },
-      yAxis: {
-        type: 'value',
-        axisLabel: { formatter: '{value}%' },
-        splitLine: { lineStyle: { type: 'dashed', color: 'var(--border-color)' } }
-      },
-      series: series
-    }
-  } catch (err) {
-    console.error('加载分时对比失败', err)
-    chartOption.value = null
-  } finally {
-    chartLoading.value = false
-  }
-}
+// updateChart 逻辑已经放入 useSurgeMinuteChart
 
 const getPlateCardStyle = (plate: PlateDetail) => {
   const intensity = Math.min(plate.limitUpCount / 5, 1)
@@ -698,7 +414,7 @@ const isToday = (date: string) => {
 
 onMounted(async () => {
   try {
-    const latestDay = await window.electronAPI.db.getLatestTradingDay()
+    const latestDay = await marketApi.getLatestTradingDay()
     if (latestDay) {
       latestTradingDate.value = latestDay.date
     }

@@ -1,6 +1,6 @@
 import { app, ipcMain, shell, dialog, BrowserWindow } from 'electron'
 import log from 'electron-log'
-import { IpcChannel } from '../../constants'
+import { IpcChannel } from '@common/constants'
 
 export function initAppHandlers(): void {
   ipcMain.handle(IpcChannel.APP_GET_VERSION, () => {

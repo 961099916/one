@@ -4,7 +4,7 @@
  */
 import log from 'electron-log'
 import { getDB } from '../connection'
-import type { SurgePlateRow, SurgeStockRow } from '../types'
+import type { SurgePlateRow, SurgeStockRow } from '@common/types'
 
 /**
  * 热点题材数据仓储操作

@@ -1,12 +1,12 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1775754970420,
+  "lastScanned": 1776073992853,
   "projectRoot": "/Users/zhangjiahao/IdeaProjects/one/one",
   "techStack": {
     "languages": [
       {
         "name": "JavaScript/TypeScript",
-        "version": ">=18.0.0",
+        "version": ">=24.0.0",
         "confidence": "high",
         "markers": [
           "package.json"
@@ -34,7 +34,7 @@
       }
     ],
     "packageManager": "npm",
-    "runtime": "Node.js 18.0.0"
+    "runtime": "Node.js 24.0.0"
   },
   "build": {
     "buildCommand": "npm run build",
@@ -50,7 +50,8 @@
       "lint:check": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts",
       "format": "prettier --write src/ electron/",
       "format:check": "prettier --check src/ electron/",
-      "check": "npm run type-check && npm run lint:check && npm run format:check"
+      "check": "npm run type-check && npm run lint:check && npm run format:check",
+      "rebuild": "electron-rebuild -f -w better-sqlite3"
     }
   },
   "conventions": {
@@ -71,11 +72,18 @@
   },
   "customNotes": [],
   "directoryMap": {
+    "common": {
+      "path": "common",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1776073992828,
+      "keyFiles": []
+    },
     "dist": {
       "path": "dist",
       "purpose": "Distribution/build output",
       "fileCount": 4,
-      "lastAccessed": 1775754970053,
+      "lastAccessed": 1776073992836,
       "keyFiles": [
         "electron-vite.animate.svg",
         "electron-vite.svg",
@@ -86,29 +94,33 @@
     "dist-electron": {
       "path": "dist-electron",
       "purpose": null,
-      "fileCount": 2,
-      "lastAccessed": 1775754970130,
+      "fileCount": 716,
+      "lastAccessed": 1776073992839,
       "keyFiles": [
-        "main.js",
-        "preload.mjs"
+        "aiChatService-0Z_XJ394.js",
+        "aiChatService-B7PTUmRm.js",
+        "aiChatService-BD-YSfzB.js",
+        "aiChatService-BKDFcnHB.js",
+        "aiChatService-BbjO__xH.js"
       ]
     },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
-      "fileCount": 3,
-      "lastAccessed": 1775754970213,
+      "fileCount": 4,
+      "lastAccessed": 1776073992842,
       "keyFiles": [
         "ARCHITECTURE.md",
         "DEVELOPMENT.md",
-        "PERSISTENCE.md"
+        "PERSISTENCE.md",
+        "Xuangutong.md"
       ]
     },
     "electron": {
       "path": "electron",
       "purpose": null,
       "fileCount": 4,
-      "lastAccessed": 1775754970214,
+      "lastAccessed": 1776073992842,
       "keyFiles": [
         "electron-env.d.ts",
         "main.ts",
@@ -119,7 +131,7 @@
       "path": "public",
       "purpose": "Public files",
       "fileCount": 3,
-      "lastAccessed": 1775754970217,
+      "lastAccessed": 1776073992843,
       "keyFiles": [
         "electron-vite.animate.svg",
         "electron-vite.svg",
@@ -130,14 +142,14 @@
       "path": "release",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1775754970219,
+      "lastAccessed": 1776073992844,
       "keyFiles": []
     },
     "src": {
       "path": "src",
       "purpose": "Source code",
       "fileCount": 5,
-      "lastAccessed": 1775754970220,
+      "lastAccessed": 1776073992846,
       "keyFiles": [
         "App.vue",
         "auto-imports.d.ts",
@@ -146,29 +158,61 @@
         "vite-env.d.ts"
       ]
     },
+    "common/types": {
+      "path": "common/types",
+      "purpose": "Type definitions",
+      "fileCount": 6,
+      "lastAccessed": 1776073992847,
+      "keyFiles": [
+        "app.ts",
+        "chat.ts",
+        "index.ts"
+      ]
+    },
+    "common/utils": {
+      "path": "common/utils",
+      "purpose": "Utility functions",
+      "fileCount": 1,
+      "lastAccessed": 1776073992848,
+      "keyFiles": [
+        "stockCode.ts"
+      ]
+    },
     "dist/assets": {
       "path": "dist/assets",
       "purpose": "Static assets",
-      "fileCount": 2,
-      "lastAccessed": 1775754970224,
+      "fileCount": 4,
+      "lastAccessed": 1776073992849,
       "keyFiles": [
-        "index-BRNpqvxz.css",
-        "index-Co9ozIzn.js"
+        "MarketData-DW4JBnlo.js",
+        "MarketData-FkS-Ha3x.css",
+        "index-BTdlojkx.js"
       ]
     },
     "electron/services": {
       "path": "electron/services",
       "purpose": "Business logic services",
       "fileCount": 0,
-      "lastAccessed": 1775754970253,
+      "lastAccessed": 1776073992850,
       "keyFiles": []
     },
     "electron/types": {
       "path": "electron/types",
       "purpose": "Type definitions",
       "fileCount": 1,
-      "lastAccessed": 1775754970276,
+      "lastAccessed": 1776073992851,
       "keyFiles": [
+        "index.ts"
+      ]
+    },
+    "src/api": {
+      "path": "src/api",
+      "purpose": "API routes",
+      "fileCount": 5,
+      "lastAccessed": 1776073992853,
+      "keyFiles": [
+        "app.ts",
+        "config.ts",
         "index.ts"
       ]
     },
@@ -176,7 +220,7 @@
       "path": "src/assets",
       "purpose": "Static assets",
       "fileCount": 3,
-      "lastAccessed": 1775754970284,
+      "lastAccessed": 1776073992853,
       "keyFiles": [
         "main.css",
         "tailwind.css",
@@ -187,7 +231,7 @@
       "path": "src/components",
       "purpose": "UI components",
       "fileCount": 4,
-      "lastAccessed": 1775754970301,
+      "lastAccessed": 1776073992853,
       "keyFiles": [
         "ChatInput.vue",
         "EmptyState.vue",

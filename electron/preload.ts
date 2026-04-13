@@ -1,5 +1,6 @@
 import { ipcRenderer, contextBridge } from 'electron'
 import type { IpcRendererEvent } from 'electron'
+import { IpcChannel } from '@common/constants'
 
 /**
  * 预加载脚本
@@ -31,80 +32,80 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
 contextBridge.exposeInMainWorld('electronAPI', {
   // ---------- 数据库操作（SQLite via 主进程） ----------
   db: {
-    getSessions: () => ipcRenderer.invoke('db:get-sessions'),
-    createSession: (session: unknown) => ipcRenderer.invoke('db:create-session', session),
+    getSessions: () => ipcRenderer.invoke(IpcChannel.DB_GET_SESSIONS),
+    createSession: (session: unknown) => ipcRenderer.invoke(IpcChannel.DB_CREATE_SESSION, session),
     updateSession: (id: string, updates: unknown) =>
-      ipcRenderer.invoke('db:update-session', id, updates),
-    deleteSession: (id: string) => ipcRenderer.invoke('db:delete-session', id),
+      ipcRenderer.invoke(IpcChannel.DB_UPDATE_SESSION, id, updates),
+    deleteSession: (id: string) => ipcRenderer.invoke(IpcChannel.DB_DELETE_SESSION, id),
 
-    getMessages: (sessionId: string) => ipcRenderer.invoke('db:get-messages', sessionId),
+    getMessages: (sessionId: string) => ipcRenderer.invoke(IpcChannel.DB_GET_MESSAGES, sessionId),
     addMessage: (sessionId: string, role: string, content: string, createdAt: number) =>
-      ipcRenderer.invoke('db:add-message', sessionId, role, content, createdAt),
+      ipcRenderer.invoke(IpcChannel.DB_ADD_MESSAGE, sessionId, role, content, createdAt),
     updateLastMessage: (sessionId: string, content: string) =>
-      ipcRenderer.invoke('db:update-last-message', sessionId, content),
-    clearMessages: (sessionId: string) => ipcRenderer.invoke('db:clear-messages', sessionId),
-    getMarketData: (params: unknown) => ipcRenderer.invoke('db:get-market-data', params),
-    syncMarketData: (params: unknown) => ipcRenderer.invoke('db:sync-market-data', params),
-    getAllTradingDays: () => ipcRenderer.invoke('db:get-all-trading-days'),
+      ipcRenderer.invoke(IpcChannel.DB_UPDATE_LAST_MESSAGE, sessionId, content),
+    clearMessages: (sessionId: string) => ipcRenderer.invoke(IpcChannel.DB_CLEAR_MESSAGES, sessionId),
+    getMarketData: (params: unknown) => ipcRenderer.invoke(IpcChannel.DB_GET_MARKET_DATA, params),
+    syncMarketData: (params: unknown) => ipcRenderer.invoke(IpcChannel.DB_SYNC_MARKET_DATA, params),
+    getAllTradingDays: () => ipcRenderer.invoke(IpcChannel.DB_GET_ALL_TRADING_DAYS),
     updateTradingDay: (params: { date: string, isTrading: boolean }) => 
-      ipcRenderer.invoke('db:update-trading-day', params),
+      ipcRenderer.invoke(IpcChannel.DB_UPDATE_TRADING_DAY, params),
     getStockPool: (params: { poolName: string, date: string }) => 
-      ipcRenderer.invoke('db:get-stock-pool', params),
+      ipcRenderer.invoke(IpcChannel.DB_GET_STOCK_POOL, params),
     syncStockPool: (params: { poolName: string, date: string }) => 
-      ipcRenderer.invoke('db:sync-stock-pool', params),
+      ipcRenderer.invoke(IpcChannel.DB_SYNC_STOCK_POOL, params),
     batchSyncXuanguBao: (params: { startDate: string, endDate: string, force?: boolean }) =>
-      ipcRenderer.invoke('db:batch-sync-xuangubao', params),
+      ipcRenderer.invoke(IpcChannel.DB_BATCH_SYNC_XUANGUBAO, params),
     getSurgePlates: (params: { date: string, timestamp?: number }) => 
-      ipcRenderer.invoke('db:get-surge-plates', params),
+      ipcRenderer.invoke(IpcChannel.DB_GET_SURGE_PLATES, params),
     getSurgeStocks: (params: { date: string, timestamp?: number }) => 
-      ipcRenderer.invoke('db:get-surge-stocks', params),
-    syncSurgeData: (date: string) => ipcRenderer.invoke('db:sync-surge-data', date),
-    getLatestSurgeTimestamp: (date: string) => ipcRenderer.invoke('db:get-latest-surge-timestamp', date),
-    getSurgeTimestamps: (date: string) => ipcRenderer.invoke('db:get-surge-timestamps', date),
-    getSurgeHistoricalDates: () => ipcRenderer.invoke('db:get-surge-historical-dates'),
-    getSentimentCycle: (params: unknown) => ipcRenderer.invoke('db:get-sentiment-cycle', params),
-    getLatestTradingDay: () => ipcRenderer.invoke('db:get-latest-trading-day'),
+      ipcRenderer.invoke(IpcChannel.DB_GET_SURGE_STOCKS, params),
+    syncSurgeData: (date: string) => ipcRenderer.invoke(IpcChannel.DB_SYNC_SURGE_DATA, date),
+    getLatestSurgeTimestamp: (date: string) => ipcRenderer.invoke(IpcChannel.DB_GET_LATEST_SURGE_TIMESTAMP, date),
+    getSurgeTimestamps: (date: string) => ipcRenderer.invoke(IpcChannel.DB_GET_SURGE_TIMESTAMPS, date),
+    getSurgeHistoricalDates: () => ipcRenderer.invoke(IpcChannel.DB_GET_SURGE_HISTORICAL_DATES),
+    getSentimentCycle: (params: unknown) => ipcRenderer.invoke(IpcChannel.DB_GET_SENTIMENT_CYCLE, params),
+    getLatestTradingDay: () => ipcRenderer.invoke(IpcChannel.DB_GET_LATEST_TRADING_DAY),
   },
 
   // ---------- 配置操作（electron-store via 主进程） ----------
   config: {
-    get: (key: string) => ipcRenderer.invoke('config:get', key),
-    set: (key: string, value: unknown) => ipcRenderer.invoke('config:set', key, value),
-    getAll: () => ipcRenderer.invoke('config:get-all'),
-    reset: () => ipcRenderer.invoke('config:reset'),
+    get: (key: string) => ipcRenderer.invoke(IpcChannel.CONFIG_GET, key),
+    set: (key: string, value: unknown) => ipcRenderer.invoke(IpcChannel.CONFIG_SET, key, value),
+    getAll: () => ipcRenderer.invoke(IpcChannel.CONFIG_GET_ALL),
+    reset: () => ipcRenderer.invoke(IpcChannel.CONFIG_RESET),
   },
 
   // ---------- 文件操作（userData 目录） ----------
   file: {
     save: (sourcePath: string, originalName: string) =>
-      ipcRenderer.invoke('file:save', sourcePath, originalName),
+      ipcRenderer.invoke(IpcChannel.FILE_SAVE, sourcePath, originalName),
     saveImage: (sourcePath: string, originalName: string) =>
-      ipcRenderer.invoke('file:save-image', sourcePath, originalName),
+      ipcRenderer.invoke(IpcChannel.FILE_SAVE_IMAGE, sourcePath, originalName),
     saveBase64Image: (base64Data: string, extension?: string) =>
-      ipcRenderer.invoke('file:save-base64-image', base64Data, extension),
-    getPath: (relativePath: string) => ipcRenderer.invoke('file:get-path', relativePath),
-    exists: (relativePath: string) => ipcRenderer.invoke('file:exists', relativePath),
-    delete: (relativePath: string) => ipcRenderer.invoke('file:delete', relativePath),
-    read: (relativePath: string) => ipcRenderer.invoke('file:read', relativePath),
+      ipcRenderer.invoke(IpcChannel.FILE_SAVE_BASE64_IMAGE, base64Data, extension),
+    getPath: (relativePath: string) => ipcRenderer.invoke(IpcChannel.FILE_GET_PATH, relativePath),
+    exists: (relativePath: string) => ipcRenderer.invoke(IpcChannel.FILE_EXISTS, relativePath),
+    delete: (relativePath: string) => ipcRenderer.invoke(IpcChannel.FILE_DELETE, relativePath),
+    read: (relativePath: string) => ipcRenderer.invoke(IpcChannel.FILE_READ, relativePath),
   },
 
   // ---------- 应用操作 ----------
   app: {
-    getVersion: () => ipcRenderer.invoke('app:get-version'),
-    getEnvInfo: () => ipcRenderer.invoke('app:get-env-info'),
-    openLogDir: () => ipcRenderer.invoke('app:open-log-dir'),
-    relaunch: () => ipcRenderer.invoke('app:relaunch'),
-    setLoginItem: (enabled: boolean) => ipcRenderer.invoke('app:set-login-item', enabled),
-    getLoginItem: () => ipcRenderer.invoke('app:get-login-item'),
-    proxyFetch: (url: string) => ipcRenderer.invoke('app:proxy-fetch', url),
-    selectDirectory: () => ipcRenderer.invoke('app:select-directory'),
+    getVersion: () => ipcRenderer.invoke(IpcChannel.APP_GET_VERSION),
+    getEnvInfo: () => ipcRenderer.invoke(IpcChannel.APP_GET_ENV_INFO),
+    openLogDir: () => ipcRenderer.invoke(IpcChannel.APP_OPEN_LOG_DIR),
+    relaunch: () => ipcRenderer.invoke(IpcChannel.APP_RELAUNCH),
+    setLoginItem: (enabled: boolean) => ipcRenderer.invoke(IpcChannel.APP_SET_LOGIN_ITEM, enabled),
+    getLoginItem: () => ipcRenderer.invoke(IpcChannel.APP_GET_LOGIN_ITEM),
+    proxyFetch: (url: string) => ipcRenderer.invoke(IpcChannel.APP_PROXY_FETCH, url),
+    selectDirectory: () => ipcRenderer.invoke(IpcChannel.APP_SELECT_DIRECTORY),
   },
 
   // ---------- 自动更新 ----------
   updater: {
-    check: () => ipcRenderer.invoke('update:check'),
-    download: () => ipcRenderer.invoke('update:download'),
-    install: () => ipcRenderer.invoke('update:install'),
+    check: () => ipcRenderer.invoke(IpcChannel.UPDATE_CHECK),
+    download: () => ipcRenderer.invoke(IpcChannel.UPDATE_DOWNLOAD),
+    install: () => ipcRenderer.invoke(IpcChannel.UPDATE_INSTALL),
     /** 监听更新状态推送（主进程 → 渲染进程） */
     onStatus: (
       callback: (data: {
@@ -116,36 +117,35 @@ contextBridge.exposeInMainWorld('electronAPI', {
       }) => void
     ) => {
       const listener = (_event: any, data: any) => callback(data)
-      ipcRenderer.on('update:status', listener)
-      return () => ipcRenderer.removeListener('update:status', listener)
+      ipcRenderer.on(IpcChannel.UPDATE_STATUS, listener)
+      return () => ipcRenderer.removeListener(IpcChannel.UPDATE_STATUS, listener)
     },
     offStatus: () => {
-      ipcRenderer.removeAllListeners('update:status')
+      ipcRenderer.removeAllListeners(IpcChannel.UPDATE_STATUS)
     },
   },
 
   // ---------- 通达信本地数据 ----------
   tdx: {
     getMinuteData: (params: { tdxPath: string; symbol: string; date: string; period?: '1' | '5' }) =>
-      ipcRenderer.invoke('tdx:get-minute-data', params),
+      ipcRenderer.invoke(IpcChannel.TDX_GET_MINUTE_DATA, params),
     openStock: (symbol: string) =>
-      ipcRenderer.invoke('tdx:open-stock', symbol),
+      ipcRenderer.invoke(IpcChannel.TDX_OPEN_STOCK, symbol),
   },
   // ---------- 同花顺联动 ----------
   ths: {
     openStock: (symbol: string) =>
-      ipcRenderer.invoke('open-tonghuashun-stock', symbol),
+      ipcRenderer.invoke(IpcChannel.OPEN_TONGHUASHUN_STOCK, symbol),
   },
 
   // ---------- 窗口控制 ----------
   window: {
-    minimize: () => ipcRenderer.invoke('window:minimize'),
-    maximize: () => ipcRenderer.invoke('window:maximize'),
-    unmaximize: () => ipcRenderer.invoke('window:unmaximize'),
-    close: () => ipcRenderer.invoke('window:close'),
-    isMaximized: () => ipcRenderer.invoke('window:is-maximized'),
+    minimize: () => ipcRenderer.invoke(IpcChannel.WINDOW_MINIMIZE),
+    maximize: () => ipcRenderer.invoke(IpcChannel.WINDOW_MAXIMIZE),
+    unmaximize: () => ipcRenderer.invoke(IpcChannel.WINDOW_UNMAXIMIZE),
+    close: () => ipcRenderer.invoke(IpcChannel.WINDOW_CLOSE),
+    isMaximized: () => ipcRenderer.invoke(IpcChannel.WINDOW_IS_MAXIMIZED),
     setTitlebarColor: (color: string, symbolColor: string) => 
-      ipcRenderer.invoke('window:set-titlebar-color', { color, symbolColor }),
+      ipcRenderer.invoke(IpcChannel.WINDOW_SET_TITLEBAR_COLOR, { color, symbolColor }),
   },
 })
-

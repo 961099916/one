@@ -4,7 +4,7 @@
  */
 import log from 'electron-log'
 import { getDB } from '../connection'
-import type { TradingDayRow } from '../types'
+import type { TradingDayRow } from '@common/types'
 
 export const tradingDayRepository = {
   /**

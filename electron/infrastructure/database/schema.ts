@@ -7,7 +7,7 @@ import type { Database } from 'better-sqlite3'
 import { getDB } from './connection'
 
 // 当前数据库期望的最新版本
-const LATEST_SCHEMA_VERSION = 8
+const LATEST_SCHEMA_VERSION = 9
 
 /**
  * 初始化数据库架构并执行迁移
@@ -64,6 +64,11 @@ export function initDatabaseSchema(): void {
           migrateToV8(db)
         }
         
+        if (currentVersion < 9) {
+          log.info('[Database] 正在执行迁移 V9: 增加搜索相关索引优化性能...')
+          migrateToV9(db)
+        }
+
         // 更新版本号
         db.pragma(`user_version = ${LATEST_SCHEMA_VERSION}`)
       })()
@@ -74,8 +79,19 @@ export function initDatabaseSchema(): void {
       throw err
     }
   } else {
-    log.debug('[Database] 数据库版本已是最新，无需迁移')
   }
+}
+
+/**
+ * 迁移 V9: 增加搜索相关索引优化性能
+ */
+function migrateToV9(db: Database): void {
+  // 为 stock_pool_data 增加搜索索引
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_stock_pool_stock_name ON stock_pool_data(stock_name)`)
+  
+  // 为 surge_stocks 增加搜索索引
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_surge_stocks_symbol ON surge_stocks(symbol)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_surge_stocks_stock_name ON surge_stocks(stock_name)`)
 }
 
 /**

@@ -2,7 +2,7 @@
  * 自动更新 IPC 处理器
  */
 import { ipcMain } from 'electron'
-import { IpcChannel } from '../../constants'
+import { IpcChannel } from '@common/constants'
 import { UpdateService } from '../../services/core/updateService'
 import log from 'electron-log'
 

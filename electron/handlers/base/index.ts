@@ -1,5 +1,5 @@
 export { initAllHandlers } from './ipcRegistry'
 export { initAppHandlers } from './appHandlers'
-export { initDbHandlers } from './dbHandlers'
+export { initDbHandlers } from './db'
 export { initFileHandlers } from './fileHandlers'
 export { initTongHuaShunHandlers } from './tonghuashunHandlers'

@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron'
-import { IpcChannel } from '../../constants'
+import { IpcChannel } from '@common/constants'
 import { TongHuaShunService } from '../../services/integration/tonghuashunService'
 import { appConfigOps } from '../../infrastructure/store/appConfig'
 import log from 'electron-log'

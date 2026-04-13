@@ -1,14 +1,6 @@
-/**
- * 设置状态 Store
- *
- * 持久化方案：
- * - 核心配置（activeModel、generationParams 等）：electron-store（主进程）
- * - UI 临时状态：Dexie.js（渲染进程 IndexedDB）
- */
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { log } from '@/utils/logger'
-import type { ModelInfo } from '@/types'
 
 export interface GenerationParams {
   systemPrompt: string
@@ -20,7 +12,7 @@ export interface GenerationParams {
 }
 
 const DEFAULT_PARAMS: GenerationParams = {
-  systemPrompt: 'You are a helpful local AI assistant. Please respond in Markdown format.',
+  systemPrompt: '你是一个专业的 A 股短线复盘与智能助手“壹复盘”。请务必使用 Markdown 格式回复。',
   temperature: 0.7,
   topP: 0.9,
   topK: 40,
@@ -31,8 +23,6 @@ const DEFAULT_PARAMS: GenerationParams = {
 export const useSettingsStore = defineStore(
   'settings',
   () => {
-    const activeModelName = ref<string>('')
-    const models = ref<ModelInfo[]>([])
     const generationParams = ref<GenerationParams>({ ...DEFAULT_PARAMS })
 
     // 应用设置
@@ -43,11 +33,18 @@ export const useSettingsStore = defineStore(
     const autoCheckUpdate = ref(true)
     const enableTelemetry = ref(false)
 
-    const activeModel = computed(
-      () => models.value.find(m => m.name === activeModelName.value) ?? null
-    )
-
-    const hasActiveModel = computed(() => !!activeModelName.value)
+    // AI 服务商设置
+    const activeAiProvider = ref<'openai' | 'deepseek'>('deepseek')
+    const openAiConfig = ref({
+      apiKey: '',
+      baseUrl: 'https://api.openai.com/v1',
+      model: 'gpt-4o'
+    })
+    const deepSeekConfig = ref({
+      apiKey: '',
+      baseUrl: 'https://api.deepseek.com',
+      model: 'deepseek-chat'
+    })
 
     /** 初始化时从 electron-store 加载配置 */
     async function initFromStore(): Promise<void> {
@@ -55,10 +52,6 @@ export const useSettingsStore = defineStore(
       try {
         const config = await (window.electronAPI as any).config.getAll()
 
-        // 只在模型文件存在时才使用
-        const storedModel = config.activeModel || ''
-        activeModelName.value = storedModel.endsWith('.gguf') ? storedModel : ''
-        
         generationParams.value = {
           ...DEFAULT_PARAMS,
           ...config.generationParams,
@@ -69,34 +62,48 @@ export const useSettingsStore = defineStore(
         sidebarWidth.value = config.sidebarWidth || 240
         autoCheckUpdate.value = config.autoCheckUpdate ?? true
         enableTelemetry.value = config.enableTelemetry ?? false
+        
+        // 如果旧配置是 local，则强制切换到 deepseek
+        const provider = config.activeAiProvider
+        activeAiProvider.value = (provider === 'openai' || provider === 'deepseek') ? provider : 'deepseek'
+        
+        if (config.openAiConfig) {
+          openAiConfig.value = { ...openAiConfig.value, ...config.openAiConfig }
+        }
+        if (config.deepSeekConfig) {
+          deepSeekConfig.value = { ...deepSeekConfig.value, ...config.deepSeekConfig }
+        }
       } catch (err) {
         log.error('[SettingsStore] 从 electron-store 加载配置失败:', err)
       }
     }
 
-    async function setActiveModelName(name: string): Promise<void> {
-      activeModelName.value = name
-
-      // 通知 Electron 主进程加载模型
-      if (window.ipcRenderer) {
-        window.ipcRenderer.send('set-active-model', name)
-      }
-
-      // 持久化到 electron-store
+    async function setActiveAiProvider(provider: 'openai' | 'deepseek'): Promise<void> {
+      activeAiProvider.value = provider
       if (window.electronAPI) {
-        await (window.electronAPI as any).config.set('activeModel', name)
+        await (window.electronAPI as any).config.set('activeAiProvider', provider)
       }
     }
 
-    function setModels(modelList: ModelInfo[]): void {
-      models.value = modelList
+    async function updateOpenAiConfig(config: Partial<{ apiKey: string; baseUrl: string; model: string }>): Promise<void> {
+      openAiConfig.value = { ...openAiConfig.value, ...config }
+      if (window.electronAPI) {
+        await (window.electronAPI as any).config.set('openAiConfig', { ...openAiConfig.value })
+      }
+    }
+
+    async function updateDeepSeekConfig(config: Partial<{ apiKey: string; baseUrl: string; model: string }>): Promise<void> {
+      deepSeekConfig.value = { ...deepSeekConfig.value, ...config }
+      if (window.electronAPI) {
+        await (window.electronAPI as any).config.set('deepSeekConfig', { ...deepSeekConfig.value })
+      }
     }
 
     async function updateGenerationParams(params: Partial<GenerationParams>): Promise<void> {
       generationParams.value = { ...generationParams.value, ...params }
 
       if (window.electronAPI) {
-        await (window.electronAPI as any).config.set('generationParams', generationParams.value)
+        await (window.electronAPI as any).config.set('generationParams', { ...generationParams.value })
       }
     }
 
@@ -104,7 +111,7 @@ export const useSettingsStore = defineStore(
       generationParams.value = { ...DEFAULT_PARAMS }
 
       if (window.electronAPI) {
-        await (window.electronAPI as any).config.set('generationParams', generationParams.value)
+        await (window.electronAPI as any).config.set('generationParams', { ...generationParams.value })
       }
     }
 
@@ -131,8 +138,6 @@ export const useSettingsStore = defineStore(
     }
 
     return {
-      activeModelName,
-      models,
       generationParams,
       theme,
       language,
@@ -140,14 +145,17 @@ export const useSettingsStore = defineStore(
       sidebarWidth,
       autoCheckUpdate,
       enableTelemetry,
-      activeModel,
-      hasActiveModel,
+      activeAiProvider,
+      openAiConfig,
+      deepSeekConfig,
       initFromStore,
-      setActiveModelName,
-      setModels,
+      setActiveAiProvider,
+      updateOpenAiConfig,
+      updateDeepSeekConfig,
       updateGenerationParams,
       resetGenerationParams,
       updateAppSettings,
     }
+
   }
 )

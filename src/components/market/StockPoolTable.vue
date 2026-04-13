@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, h } from 'vue'
+import { ref, onMounted, computed, h, watch } from 'vue'
 import {
   NCard,
   NDataTable,
@@ -381,6 +381,11 @@ const fetchData = async () => {
 const handleDateChange = () => {
   fetchData()
 }
+
+// 监听分类切换
+watch(() => props.poolName, () => {
+  fetchData()
+})
 
 const handleSync = async () => {
   syncing.value = true

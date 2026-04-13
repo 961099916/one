@@ -4,7 +4,7 @@
  */
 import log from 'electron-log'
 import { getDB } from '../connection'
-import type { StockPoolRow } from '../types'
+import type { StockPoolRow } from '@common/types'
 
 /**
  * 股票池数据仓储操作
@@ -124,5 +124,41 @@ export const stockPoolRepository = {
       ORDER BY max_board DESC, last_limit_up_time ASC
     `)
     return stmt.all(...dates, minBoard) as any[]
+  },
+
+  /**
+   * 搜索股票 (针对性能优化后的版本)
+   * 采用拆分查询策略，避免 UNION DISTINCT 导致的全表扫描阻塞
+   */
+  searchStocks(keyword: string): Array<{ symbol: string, stock_name: string }> {
+    const db = getDB()
+    const pattern = `%${keyword}%`
+    const results = new Map<string, string>()
+
+    try {
+      // 1. 先从股票池搜，限制 10 条
+      const rows1 = db.prepare(`
+        SELECT symbol, stock_name FROM stock_pool_data
+        WHERE symbol LIKE ? OR stock_name LIKE ?
+        LIMIT 10
+      `).all(pattern, pattern) as any[]
+      
+      for (const row of rows1) results.set(row.symbol, row.stock_name)
+
+      // 2. 如果结果不够，再从热点个股搜
+      if (results.size < 10) {
+        const rows2 = db.prepare(`
+          SELECT symbol, stock_name FROM surge_stocks
+          WHERE symbol LIKE ? OR stock_name LIKE ?
+          LIMIT 10
+        `).all(pattern, pattern) as any[]
+        
+        for (const row of rows2) results.set(row.symbol, row.stock_name)
+      }
+    } catch (err) {
+      log.error('[StockPoolRepository] 搜索失败:', err)
+    }
+
+    return Array.from(results.entries()).map(([symbol, stock_name]) => ({ symbol, stock_name }))
   }
 }

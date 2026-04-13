@@ -12,6 +12,12 @@ export interface DownloadConfig {
 export interface ChatRequest {
   sessionId?: string
   prompt: string
-  history: Array<{ role: string; content: string }>
+  history: Array<{
+    role: 'user' | 'assistant' | 'system' | 'tool'
+    content: string
+    tool_calls?: any[]
+    tool_call_id?: string
+    name?: string
+  }>
   params?: Record<string, unknown>
 }

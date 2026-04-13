@@ -2,10 +2,10 @@
  * 选股通 API 服务
  */
 import log from 'electron-log'
-import { XuanguBaoConfig, HttpHeaders, HttpMethods, LogTags } from '../../constants'
+import { XuanguBaoConfig, HttpHeaders, HttpMethods, LogTags } from '@common/constants'
 import { stockPoolRepository } from '../../infrastructure/database/repositories/stockPoolRepository'
 import { surgeRepository } from '../../infrastructure/database/repositories/surgeRepository'
-import type { StockPoolRow, SurgePlateRow, SurgeStockRow } from '../../infrastructure/database/types'
+import type { StockPoolRow, SurgePlateRow, SurgeStockRow } from '@common/types/market'
 
 export interface MarketIndicatorData {
   rise_count: number
@@ -161,7 +161,7 @@ export class XuanguBaoService {
         first_limit_up_time: item.first_limit_up || item.first_limit_down || 0,
         last_limit_up_time: item.last_limit_up || item.last_limit_down || 0,
         break_count: item.break_limit_up_times || item.break_limit_down_times || 0,
-        board_count: item.limit_up_days || item.limit_down_days || item.m_days_n_boards_boards || 0,
+        board_count: item.m_days_n_boards_boards || (item.limit_up_days && item.limit_up_days > 0 ? item.limit_up_days : item.limit_down_days) || 0,
         raw_data: JSON.stringify(item),
         created_at: Date.now()
       }

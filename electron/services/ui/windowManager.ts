@@ -1,7 +1,7 @@
 import { BrowserWindow } from 'electron'
 import log from 'electron-log'
 import path from 'node:path'
-import { WindowConfig } from '../../constants'
+import { WindowConfig } from '@common/constants'
 import { loadWindowState, VITE_DEV_SERVER_URL, RENDERER_DIST, PRELOAD_PATH } from '../../core/appBootstrap'
 
 export async function createMainWindow(): Promise<BrowserWindow> {

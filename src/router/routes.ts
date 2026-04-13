@@ -76,7 +76,8 @@ export const baseRoutes: AppRouteRecordRaw[] = [
           {
             path: 'limit-up',
             name: RouteName.XUANGUBAO_LIMIT_UP,
-            component: () => import('@/views/MarketLimitUp.vue'),
+            component: () => import('@/views/StockPool.vue'),
+            props: { poolName: 'limit_up' },
             meta: {
               title: '涨停池分析',
             },
@@ -84,7 +85,8 @@ export const baseRoutes: AppRouteRecordRaw[] = [
           {
             path: 'limit-up-broken',
             name: RouteName.XUANGUBAO_LIMIT_UP_BROKEN,
-            component: () => import('@/views/MarketBrokenLimitUp.vue'),
+            component: () => import('@/views/StockPool.vue'),
+            props: { poolName: 'broken_limit_up' },
             meta: {
               title: '炸板池分析',
             },
@@ -92,7 +94,8 @@ export const baseRoutes: AppRouteRecordRaw[] = [
           {
             path: 'yesterday-limit-up',
             name: RouteName.XUANGUBAO_YESTERDAY_LIMIT_UP,
-            component: () => import('@/views/MarketYesterdayLimitUp.vue'),
+            component: () => import('@/views/StockPool.vue'),
+            props: { poolName: 'yesterday_limit_up' },
             meta: {
               title: '昨日涨停池分析',
             },
@@ -100,7 +103,8 @@ export const baseRoutes: AppRouteRecordRaw[] = [
           {
             path: 'strong-stock',
             name: RouteName.XUANGUBAO_STRONG_STOCK,
-            component: () => import('@/views/MarketStrongStock.vue'),
+            component: () => import('@/views/StockPool.vue'),
+            props: { poolName: 'strong_stock' },
             meta: {
               title: '强势股分析',
             },
@@ -108,7 +112,8 @@ export const baseRoutes: AppRouteRecordRaw[] = [
           {
             path: 'limit-down',
             name: RouteName.XUANGUBAO_LIMIT_DOWN,
-            component: () => import('@/views/MarketLimitDown.vue'),
+            component: () => import('@/views/StockPool.vue'),
+            props: { poolName: 'limit_down' },
             meta: {
               title: '跌停池分析',
             },

@@ -1,40 +1,48 @@
 <template>
   <div class="chat-input-container">
-    <form class="input-form" @submit.prevent="handleSubmit">
-      <div class="input-wrap">
-        <textarea
-          ref="inputRef"
-          v-model="inputValue"
-          placeholder="输入消息，Enter 发送，Shift + Enter 换行..."
-          rows="1"
-          :disabled="isGenerating || !hasModel"
-          class="chat-input"
-          @keydown="handleKeydown"
-          @input="autoResize"
-        />
+    <div class="input-box" :class="{ focused: isFocused, disabled: !hasModel }">
+      <textarea
+        ref="inputRef"
+        v-model="inputValue"
+        :placeholder="placeholder"
+        :disabled="isGenerating || !hasModel"
+        rows="1"
+        class="input-field"
+        @keydown="handleKeydown"
+        @input="autoResize"
+        @focus="isFocused = true"
+        @blur="isFocused = false"
+      />
+
+      <div class="input-actions">
+        <button
+          v-if="isGenerating"
+          type="button"
+          class="action-btn stop-btn"
+          @click="$emit('stop')"
+          title="停止生成"
+        >
+          <n-icon size="18"><stop-outline /></n-icon>
+        </button>
+
+        <button
+          v-else
+          type="button"
+          class="action-btn send-btn"
+          :disabled="!canSend"
+          :class="{ active: canSend }"
+          @click="handleSubmit"
+          title="发送 (Enter)"
+        >
+          <n-icon size="18"><arrow-up-outline /></n-icon>
+        </button>
       </div>
-      <button
-        v-if="!isGenerating"
-        type="submit"
-        :disabled="!inputValue.trim() || isGenerating || !hasModel"
-        class="send-btn"
-      >
-        <n-icon size="20">
-          <arrow-up-outline />
-        </n-icon>
-      </button>
-      <button v-else type="button" class="stop-btn" @click="$emit('stop')">
-        <n-icon size="20">
-          <stop-outline />
-        </n-icon>
-      </button>
-    </form>
-    <div class="input-tip">内容由 AI 生成，请注意甄别</div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { ArrowUpOutline, StopOutline } from '@vicons/ionicons5'
 import { NIcon } from 'naive-ui'
 
@@ -42,10 +50,12 @@ interface Props {
   modelValue: string
   isGenerating: boolean
   hasModel: boolean
+  placeholder?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  hasModel: true
+  hasModel: true,
+  placeholder: '问问壹复盘：今日连板核心是谁？'
 })
 
 const emit = defineEmits<{
@@ -56,219 +66,144 @@ const emit = defineEmits<{
 
 const inputRef = ref<HTMLTextAreaElement>()
 const inputValue = ref(props.modelValue)
+const isFocused = ref(false)
 
-watch(
-  () => props.modelValue,
-  (val) => {
-    inputValue.value = val
-  }
-)
+const canSend = computed(() => {
+  return inputValue.value.trim().length > 0 && !props.isGenerating && props.hasModel
+})
+
+watch(() => props.modelValue, (val) => {
+  inputValue.value = val
+  if (!val) resetHeight()
+})
 
 watch(inputValue, (val) => {
   emit('update:modelValue', val)
 })
 
-function handleSubmit() {
-  if (inputValue.value.trim()) {
-    emit('submit')
-  }
+function handleSubmit(): void {
+  if (!canSend.value) return
+  emit('submit')
+  resetHeight()
 }
 
-function handleKeydown(event: KeyboardEvent) {
+function handleKeydown(event: KeyboardEvent): void {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault()
     handleSubmit()
-    if (inputRef.value) {
-      inputRef.value.style.height = 'auto'
-    }
   }
 }
 
-function autoResize() {
+function autoResize(): void {
   const el = inputRef.value
   if (!el) return
+
   el.style.height = 'auto'
-  el.style.height = Math.min(el.scrollHeight, 160) + 'px'
+  const newHeight = Math.min(el.scrollHeight, 200)
+  el.style.height = `${newHeight}px`
 }
+
+function resetHeight(): void {
+  const el = inputRef.value
+  if (el) el.style.height = 'auto'
+}
+
+onMounted(() => {
+  inputRef.value?.focus()
+})
 </script>
 
 <style scoped>
-/* 聊天输入容器 */
 .chat-input-container {
-  padding: 0 24px 24px;
-  background: transparent;
+  width: 100%;
 }
 
-/* 表单样式 */
-.input-form {
-  max-width: 800px;
-  margin: 0 auto;
+.input-box {
   display: flex;
   align-items: flex-end;
   gap: 12px;
-  padding: 12px 14px;
-  border-radius: 18px;
-  box-shadow: var(--shadow-md);
-  transition: all var(--transition-base);
+  padding: 12px 16px;
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
 }
 
-.input-form {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
+.input-box.focused {
+  border-color: var(--el-color-primary-light-5);
+  box-shadow: 0 2px 16px rgba(var(--el-color-primary-rgb), 0.1);
 }
 
-[data-theme="dark"] .input-form {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color-strong);
-}
-
-.input-form:focus-within {
-  box-shadow: var(--shadow-lg);
-  border-color: var(--primary-color);
-  transform: translateY(-2px);
-}
-
-/* 输入区域 */
-.input-wrap {
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-
-.chat-input {
-  width: 100%;
-  border: none;
-  background: transparent;
-  color: var(--text-primary);
-  font-family: inherit;
-  font-size: 14px;
-  line-height: 1.6;
-  resize: none;
-  padding: 4px 0;
-  outline: none;
-  max-height: 160px;
-  min-height: 24px;
-  transition: all var(--transition-base);
-}
-
-.chat-input::placeholder {
-  color: var(--text-tertiary);
-  opacity: 0.7;
-}
-
-.chat-input:disabled {
-  color: var(--text-disabled);
+.input-box.disabled {
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
-/* 按钮样式 */
-.send-btn,
-.stop-btn {
+.input-field {
+  flex: 1;
+  min-height: 24px;
+  max-height: 200px;
+  padding: 6px 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--el-text-color-primary);
+  font-size: 15px;
+  line-height: 1.6;
+  resize: none;
+  font-family: inherit;
+}
+
+.input-field::placeholder {
+  color: var(--el-text-color-placeholder);
+}
+
+.input-field:disabled {
+  cursor: not-allowed;
+}
+
+.input-actions {
+  display: flex;
+  align-items: center;
+  padding-bottom: 2px;
+}
+
+.action-btn {
   width: 32px;
   height: 32px;
-  border-radius: 12px;
   border: none;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  flex-shrink: 0;
-  transition: all var(--transition-base);
-  font-family: inherit;
+  transition: all 0.2s ease;
 }
 
 .send-btn {
-  background: var(--primary-color);
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-placeholder);
+}
+
+.send-btn.active {
+  background: var(--el-color-primary);
   color: white;
+  box-shadow: 0 2px 8px rgba(var(--el-color-primary-rgb), 0.3);
 }
 
-.send-btn:hover:not(:disabled) {
-  background: var(--primary-hover);
+.send-btn.active:hover {
   transform: scale(1.05);
-}
-
-.send-btn:active:not(:disabled) {
-  transform: scale(0.95);
-}
-
-.send-btn:disabled {
-  background: var(--bg-app);
-  color: var(--text-disabled);
-  cursor: not-allowed;
+  background: var(--el-color-primary-light-3);
 }
 
 .stop-btn {
-  background: var(--danger-color);
+  background: var(--el-text-color-primary);
   color: white;
 }
 
 .stop-btn:hover {
-  background: var(--danger-hover);
   transform: scale(1.05);
-}
-
-/* 提示文字 */
-.input-tip {
-  text-align: center;
-  font-size: 11px;
-  color: var(--text-tertiary);
-  margin-top: 12px;
-  opacity: 0.6;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .chat-input-container {
-    padding: 0 16px 16px;
-  }
-  
-  .input-form {
-    padding: 10px 10px 10px 14px;
-    gap: 10px;
-  }
-  
-  .chat-input {
-    font-size: 13px;
-    line-height: 1.5;
-    max-height: 140px;
-  }
-  
-  .send-btn,
-  .stop-btn {
-    width: 32px;
-    height: 32px;
-  }
-  
-  .send-btn svg,
-  .stop-btn svg {
-    width: 16px;
-    height: 16px;
-  }
-  
-  .input-tip {
-    font-size: 11px;
-  }
-}
-
-/* 深色模式支持 */
-[data-theme="dark"] .chat-input-container {
-  background: transparent;
-}
-
-[data-theme="dark"] .input-form {
-  background: var(--bg-secondary);
-  border-color: var(--border-color-strong);
-}
-
-[data-theme="dark"] .chat-input {
-  color: var(--text-primary);
-}
-
-[data-theme="dark"] .chat-input::placeholder {
-  color: var(--text-tertiary);
-}
-
-[data-theme="dark"] .input-tip {
-  color: var(--text-tertiary);
+  background: var(--el-text-color-regular);
 }
 </style>

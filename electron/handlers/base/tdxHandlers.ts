@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron'
-import { IpcChannel } from '../../constants'
+import { IpcChannel } from '@common/constants'
 import { TdxService } from '../../services/integration/tdxService'
 import { appConfigOps } from '../../infrastructure/store/appConfig'
 

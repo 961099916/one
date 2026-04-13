@@ -64,8 +64,20 @@
   /* --- 字体栈 (Modern Stack) --- */
   --el-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   
-  /* --- 间距 (8px Grid) --- */
+  /* --- 间隔 (8px Grid) --- */
   --spacing-unit: 8px;
+
+  /* Minimalist & High-Readability Design Tokens */
+  --glass-bg: var(--el-bg-color);
+  --glass-border: var(--el-border-color);
+  --glass-blur: none;
+  --premium-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --premium-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --accent-gradient: var(--el-color-primary);
+  --message-bg-ai: transparent;
+  --bg-sidebar-local: #f9f9f9;
+  --text-main-lh: 1.8;
+  --text-main-fs: 16px;
 }
 
 /* ==================== 深色模式 ==================== */
@@ -98,6 +110,14 @@
 
   /* --- 阴影系统 --- */
   --el-box-shadow-base: 0 4px 10px rgba(0, 0, 0, 0.2);
+
+  /* Minimalist Design Tokens (Dark) */
+  --glass-bg: var(--el-bg-color);
+  --glass-border: var(--el-border-color);
+  --glass-blur: none;
+  --message-bg-ai: transparent;
+  --premium-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  --bg-sidebar-local: #141414;
 }
 
 /* ==================== 重置 ==================== */
@@ -177,17 +197,34 @@ body {
 /* ==================== 消息内容样式 ==================== */
 
 .message-content {
-  line-height: 1.7;
-  font-size: var(--el-font-size-base);
+  line-height: var(--text-main-lh);
+  font-size: var(--text-main-fs);
   word-break: break-word;
+  color: var(--el-text-color-primary);
 }
 
 .message-content p {
-  margin-bottom: 0.75em;
+  margin-bottom: 24px;
 }
 
 .message-content p:last-child {
   margin-bottom: 0;
+}
+
+.message-content h1, .message-content h2, .message-content h3 {
+  margin-top: 32px;
+  margin-bottom: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.message-content ul, .message-content ol {
+  margin-bottom: 24px;
+  padding-left: 24px;
+}
+
+.message-content li {
+  margin-bottom: 8px;
 }
 
 .message-content code {

@@ -3,7 +3,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { AppSettings } from '@/types'
+import type { AppSettings } from '@common/types/app'
 import { uiService, electronService } from '@/services'
 
 export type UpdateStatus =

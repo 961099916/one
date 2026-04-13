@@ -1,1 +1,1 @@
-export { ModelFileService, ModelDownloadService, LlamaChatService } from './modelService'
+export { AiChatService } from './aiChatService'

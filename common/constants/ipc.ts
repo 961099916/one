@@ -1,109 +1,6 @@
 /**
- * Electron 主进程常量
+ * IPC 通信通道常量
  */
-
-// ==================== 窗口配置 ====================
-export const WindowConfig = {
-  DEFAULT_WIDTH: 1200,
-  DEFAULT_HEIGHT: 800,
-  MIN_WIDTH: 800,
-  MIN_HEIGHT: 600,
-} as const
-
-// ==================== 下载配置 ====================
-export const DownloadConfig = {
-  MIN_FILE_SIZE: 1024 * 1024, // 1MB
-  REDIRECT_STATUS_CODES: [301, 302, 303, 307, 308],
-} as const
-
-// ==================== API 配置 ====================
-
-/** 选股通 API 配置 */
-export const XuanguBaoConfig = {
-  /** API 基础地址 */
-  API_BASE: 'https://flash-api.xuangubao.com.cn/api',
-  /** API 端点 */
-  ENDPOINTS: {
-    /** 市场指标 */
-    MARKET_INDICATOR: '/market_indicator/line',
-    /** 股票池详情（涨停池、炸板池等） */
-    STOCK_POOL: '/pool/detail',
-    /** 追涨热力板 - 板块 */
-    SURGE_PLATES: '/surge_stock/plates',
-    /** 追涨热力板 - 个股详情 */
-    SURGE_STOCKS: '/surge_stock/stocks',
-  },
-  /** API 字段 */
-  FIELDS: {
-    /** 涨跌数量 */
-    RISE_FALL_COUNT: 'rise_count,fall_count',
-    /** 涨跌停数量 */
-    LIMIT_UP_DOWN_COUNT: 'limit_up_count,limit_down_count',
-    /** 炸板数据 */
-    LIMIT_UP_BROKEN: 'limit_up_broken_count,limit_up_broken_ratio',
-    /** 市场温度 */
-    MARKET_TEMPERATURE: 'market_temperature',
-  },
-} as const
-
-// ==================== HTTP 配置 ====================
-
-/** HTTP 头常量 */
-export const HttpHeaders = {
-  /** Accept 头 */
-  ACCEPT_JSON: 'application/json',
-  /** User-Agent 头 */
-  USER_AGENT: 'One AI App',
-} as const
-
-/** HTTP 方法 */
-export const HttpMethods = {
-  GET: 'GET',
-  POST: 'POST',
-  PUT: 'PUT',
-  DELETE: 'DELETE',
-} as const
-
-// ==================== 日志标签 ====================
-
-/** 日志标签常量 */
-export const LogTags = {
-  /** 选股通服务 */
-  XUANGUBAO: '[XuanguBao]',
-  /** 同花顺服务 */
-  TONGHUASHUN: '[TongHuaShun]',
-  /** 通达信服务 */
-  TDX: '[TDX]',
-} as const
-
-// ==================== 同花顺配置 ====================
-
-/** 同花顺 URL Scheme 配置 */
-export const TongHuaShunConfig = {
-  /** URL Scheme 协议 */
-  SCHEMES: {
-    /** 同花顺主协议 */
-    AMIHEXIN: 'amihexin://',
-    /** 同花顺备用协议 */
-    FLS: 'fls://',
-  },
-  /** URL 路径模板 */
-  PATHS: {
-    /** 股票页面 */
-    STOCK: '/stock/',
-    /** 股票页面 (FLS) */
-    STOCK_PAGE: '/stockpage/',
-  },
-  /** 错误消息 */
-  ERROR_MESSAGES: {
-    /** 打开失败通用消息 */
-    OPEN_FAILED: '打开同花顺失败',
-    /** 未安装提示 */
-    NOT_INSTALLED: '无法打开同花顺，请确保已安装同花顺软件',
-  },
-} as const
-
-// IPC 事件通道
 export const IpcChannel = {
   // 模型相关
   LIST_MODELS: 'list-models',
@@ -162,7 +59,7 @@ export const IpcChannel = {
   DB_GET_LATEST_SURGE_TIMESTAMP: 'db:get-latest-surge-timestamp',
   DB_GET_SURGE_TIMESTAMPS: 'db:get-surge-timestamps',
   DB_GET_SURGE_HISTORICAL_DATES: 'db:get-surge-historical-dates',
-    DB_GET_SENTIMENT_CYCLE: 'db:get-sentiment-cycle',
+  DB_GET_SENTIMENT_CYCLE: 'db:get-sentiment-cycle',
   DB_GET_LATEST_TRADING_DAY: 'db:get-latest-trading-day',
 
   // 配置（electron-store）
@@ -196,3 +93,5 @@ export const IpcChannel = {
   WINDOW_IS_MAXIMIZED: 'window:is-maximized',
   WINDOW_SET_TITLEBAR_COLOR: 'window:set-titlebar-color',
 } as const
+
+export type IpcChannelType = (typeof IpcChannel)[keyof typeof IpcChannel]

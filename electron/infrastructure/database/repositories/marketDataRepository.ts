@@ -4,7 +4,7 @@
  */
 import log from 'electron-log'
 import { getDB } from '../connection'
-import type { MarketDataRow } from '../types'
+import type { MarketDataRow } from '@common/types'
 
 /**
  * 市场数据仓储操作

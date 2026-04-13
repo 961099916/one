@@ -1,7 +1,7 @@
 import log from 'electron-log'
 import { initAppHandlers } from './appHandlers'
 import { initTongHuaShunHandlers } from './tonghuashunHandlers'
-import { initDbHandlers } from './dbHandlers'
+import { initDbHandlers } from './db'
 import { initFileHandlers } from './fileHandlers'
 import { initUpdateHandlers } from './updateHandlers'
 import { initTdxHandlers } from './tdxHandlers'

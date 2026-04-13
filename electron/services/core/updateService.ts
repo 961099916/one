@@ -4,7 +4,7 @@
 import { autoUpdater } from 'electron-updater'
 import log from 'electron-log'
 import { BrowserWindow, Notification, app } from 'electron'
-import { IpcChannel } from '../../constants'
+import { IpcChannel } from '@common/constants'
 import { appConfigOps } from '../../infrastructure/store'
 
 export class UpdateService {
@@ -149,7 +149,7 @@ export class UpdateService {
       // 显示系统通知
       try {
         const notification = new Notification({
-          title: 'One AI - 发现新版本',
+          title: '壹复盘 - 发现新版本',
           body: `新版本 v${info.version} 已可用，请前往“关于”页面更新。`,
           silent: false,
         })

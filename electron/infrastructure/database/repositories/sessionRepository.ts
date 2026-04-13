@@ -4,7 +4,7 @@
  */
 import log from 'electron-log'
 import { getDB } from '../connection'
-import type { SessionRow } from '../types'
+import type { SessionRow } from '@common/types'
 
 /**
  * 会话仓储操作

@@ -52,6 +52,7 @@ export default defineConfig({
           resolve: {
             alias: {
               '@electron': path.resolve(__dirname, 'electron'),
+              '@common': path.resolve(__dirname, 'common'),
             },
           },
         },
@@ -68,6 +69,12 @@ export default defineConfig({
                 },
               },
             },
+            resolve: {
+              alias: {
+                '@electron': path.resolve(__dirname, 'electron'),
+                '@common': path.resolve(__dirname, 'common'),
+              },
+            },
           },
       },
       renderer: process.env.NODE_ENV === 'test'
@@ -78,6 +85,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      '@common': path.resolve(__dirname, 'common'),
     },
   },
 })

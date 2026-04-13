@@ -2,7 +2,7 @@ import fs from 'fs'
 import { spawn } from 'child_process'
 import { shell } from 'electron'
 import log from 'electron-log'
-import { TongHuaShunConfig, LogTags } from '../../constants'
+import { TongHuaShunConfig, LogTags } from '@common/constants'
 
 export class TongHuaShunService {
   private static instance: TongHuaShunService

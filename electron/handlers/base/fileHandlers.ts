@@ -14,7 +14,7 @@ import {
   deleteFile,
   readFile,
 } from '../../infrastructure/database'
-import { IpcChannel } from '../../constants'
+import { IpcChannel } from '@common/constants'
 import log from 'electron-log'
 
 /**

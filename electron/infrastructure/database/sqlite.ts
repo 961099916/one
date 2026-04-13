@@ -16,7 +16,7 @@ import { initDatabaseSchema } from './schema'
 import { sessionRepository, messageRepository, marketDataRepository, tradingDayRepository, stockPoolRepository, surgeRepository } from './repositories'
 
 // 导出类型
-export type { SessionRow, MessageRow, MarketDataRow, StockPoolRow, SurgePlateRow, SurgeStockRow } from './types'
+export type { SessionRow, MessageRow, MarketDataRow, StockPoolRow, SurgePlateRow, SurgeStockRow } from '@common/types'
 
 // 导出连接管理
 export { getDBInstance } from './connection'

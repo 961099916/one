@@ -13,7 +13,7 @@ import * as fs from 'fs'
 import * as https from 'https'
 import type { BrowserWindow } from 'electron'
 import { safeDeleteFile } from './fileUtils'
-import { DownloadConfig, IpcChannel } from '../constants'
+import { DownloadConfig, IpcChannel } from '@common/constants'
 
 // ==================== 类型定义 ====================
 

@@ -3,6 +3,7 @@
  * 提供联动通达信、同花顺等外部软件的能力
  */
 import { useAppStore } from '@/stores'
+import { extractPureCode } from '@common/utils/stockCode'
 
 export function useStockActions() {
   const appStore = useAppStore()
@@ -16,7 +17,7 @@ export function useStockActions() {
       const api = (window as any).electronAPI
       if (!api?.tdx?.openStock) return
       
-      const pureCode = symbol.replace(/[^0-9]/g, '')
+      const pureCode = extractPureCode(symbol)
       const res = await api.tdx.openStock(pureCode)
       if (!res.success) {
         console.warn(`[Tdx Linkage] 联动失败: ${res.error || '未知错误'}`)
@@ -37,7 +38,7 @@ export function useStockActions() {
       const api = (window as any).electronAPI
       if (!api?.ths?.openStock) return
       
-      const pureCode = symbol.replace(/[^0-9]/g, '')
+      const pureCode = extractPureCode(symbol)
       const res = await api.ths.openStock(pureCode)
       if (!res.success) {
         console.warn(`[Ths Linkage] 联动失败: ${res.error || '未知错误'}`)

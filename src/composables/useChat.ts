@@ -7,7 +7,7 @@ import { useRouter } from 'vue-router'
 import { useChatStore, useSettingsStore } from '@/stores'
 import { RoutePath } from '@/constants'
 import { log } from '@/utils'
-import { chatService } from '@/services'
+import { chatService, electronService } from '@/services'
 
 export function useChat() {
   const router = useRouter()
@@ -20,7 +20,7 @@ export function useChat() {
 
   const messages = computed(() => chatStore.currentMessages)
   const isGenerating = computed(() => chatStore.isGenerating)
-  const activeModel = computed(() => settingsStore.activeModelName)
+  const activeAiProvider = computed(() => settingsStore.activeAiProvider)
 
   // 存储清理函数
   const cleanups: (() => void)[] = []
@@ -41,7 +41,7 @@ export function useChat() {
   /** 发送消息 */
   const sendMessage = async (): Promise<void> => {
     const userInput = input.value.trim()
-    if (!userInput || isGenerating.value || !activeModel.value) return
+    if (!userInput || isGenerating.value) return
 
     // 添加用户消息（同时写入 SQLite）
     await chatStore.addMessage({ role: 'user', content: userInput })
@@ -115,15 +115,24 @@ export function useChat() {
     log.error('Chat error:', error)
   }
 
-  onMounted(() => {
-    if (settingsStore.activeModelName) {
-      chatService.setActiveModel(settingsStore.activeModelName)
-    }
+  const chatStatus = ref('')
 
+  /** 处理状态更新 */
+  const handleChatStatus = (status: string): void => {
+    chatStatus.value = status
+  }
+
+  onMounted(() => {
     // 订阅聊天事件
     cleanups.push(chatService.onToken(handleChatToken))
     cleanups.push(chatService.onChatEnd(handleChatEnd))
     cleanups.push(chatService.onChatError(handleChatError))
+    
+    // 监听状态更新
+    const unregisterStatus = electronService.on('chat:status', (status: string) => {
+      handleChatStatus(status)
+    })
+    cleanups.push(unregisterStatus)
   })
 
   onUnmounted(() => {
@@ -135,15 +144,20 @@ export function useChat() {
     messages,
     input,
     isGenerating,
-    activeModel,
+    chatStatus,
+    activeAiProvider,
     messagesContainer,
     inputRef,
-    currentSession: chatStore.currentSession,
+    currentSession: computed(() => chatStore.currentSession),
+    sortedSessions: computed(() => chatStore.sortedSessions),
     scrollToBottom,
     goToSettings,
     sendMessage,
     stopGeneration,
     createSession: chatStore.createSession,
+    selectSession: chatStore.selectSession,
+    deleteSession: chatStore.deleteSession,
+    updateSessionTitle: chatStore.updateSessionTitle,
     clearCurrentSession: chatStore.clearCurrentSession,
   }
 }

@@ -3,7 +3,7 @@ import path from 'path'
 import { shell } from 'electron'
 import { spawn, exec } from 'child_process'
 import log from 'electron-log'
-import { LogTags } from '../../constants'
+import { LogTags } from '@common/constants'
 import { sendTextToWindowsProcess } from '../../utils/windowsAutomation'
 
 export interface TdxMinuteData {

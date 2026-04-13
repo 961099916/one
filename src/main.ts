@@ -64,15 +64,6 @@ app.mount('#app').$nextTick(async () => {
     // 从 SQLite 加载会话 + 消息
     await chatStore.ensureSession()
 
-    // 加载模型列表
-    const models = await window.ipcRenderer.invoke('list-models')
-    settingsStore.setModels(models as ModelInfo[])
-
-    // 若有已选模型且开启了自动加载，通知主进程加载
-    if (settingsStore.activeModelName && appStore.settings.autoLoadModel) {
-      window.ipcRenderer.send('set-active-model', settingsStore.activeModelName)
-    }
-
     // 监听更新状态推送
     if (window.electronAPI.updater) {
       window.electronAPI.updater.onStatus((statusData: any) => {

@@ -24,6 +24,10 @@
       </div>
     </div>
 
+    <div v-if="sentimentMatrix.length > 0" class="chart-wrapper">
+      <BaseChart :option="chartOption" :loading="loading" />
+    </div>
+
     <div class="table-wrapper" v-if="sentimentMatrix.length > 0">
       <table class="sentiment-table">
         <thead>
@@ -33,6 +37,7 @@
             <th>上证涨跌</th>
             <th>红/绿盘</th>
             <th>涨停数</th>
+            <th>跌停数</th>
             <th>炸板率</th>
             <th class="divider"></th>
             <th class="meat-face">大肉(10%+)</th>
@@ -44,6 +49,11 @@
             <th>3连板</th>
             <th>4连板</th>
             <th>5+连板</th>
+            <th>最高板</th>
+            <th>次高板</th>
+            <th class="divider"></th>
+            <th>跌停最低板</th>
+            <th>次跌停最低板</th>
             <th class="divider"></th>
             <th>1→2 晋级</th>
             <th>2→3 晋级</th>
@@ -82,6 +92,11 @@
               {{ day.limitUpCount }}
             </td>
 
+            <!-- 跌停数 -->
+            <td :style="getHeatmapStyle(day.limitDownCount, 'limitDown')">
+              {{ day.limitDownCount }}
+            </td>
+
             <!-- 炸板率 -->
             <td :style="getHeatmapStyle(day.brokenRatio, 'broken')">
               {{ (day.brokenRatio * 100).toFixed(1) }}%
@@ -110,6 +125,28 @@
             </td>
             <td :style="getLadderStyle(getHighBoardCount(day.ladder), 5)">
               {{ getHighBoardCount(day.ladder) }}
+            </td>
+
+            <!-- 最高板 -->
+            <td class="high-board-cell">
+              {{ day.maxBoard || '-' }}
+            </td>
+
+            <!-- 次高板 -->
+            <td class="high-board-cell">
+              {{ day.secondMaxBoard || '-' }}
+            </td>
+
+            <td class="divider"></td>
+
+            <!-- 跌停最低板 -->
+            <td class="down-board-cell">
+              {{ day.minDownBoard !== undefined && day.minDownBoard !== null ? day.minDownBoard : '-' }}
+            </td>
+
+            <!-- 次跌停最低板 -->
+            <td class="down-board-cell">
+              {{ day.secondMinDownBoard !== undefined && day.secondMinDownBoard !== null ? day.secondMinDownBoard : '-' }}
             </td>
 
             <td class="divider"></td>
@@ -142,7 +179,13 @@
             <!-- 题材板块 -->
             <td class="sector-cell">
               <div class="sector-tags">
-                <div v-for="sector in day.topSectors" :key="sector.name" class="sector-tag" :style="getSectorStyle(sector.count)">
+                <div 
+                  v-for="sector in day.topSectors" 
+                  :key="sector.name" 
+                  class="sector-tag" 
+                  :style="getSectorStyle(sector.count)"
+                  @click="openSectorDetail(sector, day.date)"
+                >
                   <span class="name">{{ sector.name }}</span>
                   <span class="count">{{ sector.count }}</span>
                 </div>
@@ -163,26 +206,274 @@
         <n-button type="primary" @click="goToMarketData">前往同步数据</n-button>
       </template>
     </n-empty>
+
+    <!-- 题材详情抽屉 -->
+    <n-drawer v-model:show="showDrawer" :width="drawerWidth" placement="right">
+      <div class="drawer-resizer" @mousedown="onResizerMouseDown"></div>
+      <n-drawer-content closable>
+        <template #header>
+          <div class="drawer-header">
+            <div class="header-title">
+              <span class="plate-title">{{ activeSector?.name }}</span>
+              <n-tag size="small" :bordered="false" type="info" round class="date-tag">{{ activeDate }}</n-tag>
+            </div>
+          </div>
+        </template>
+        
+        <div class="drawer-body">
+          <!-- 分时对比图区域 -->
+          <div class="chart-container">
+            <div class="chart-toolbar">
+              <div class="toolbar-left">
+                <span class="active-stock-label" v-if="activeStock">
+                  正在查看: <span class="highlight">{{ activeStock.stock_name }}</span>
+                </span>
+              </div>
+              <div class="toolbar-right">
+                <span class="overlay-label">展示个股总数:</span>
+                <n-input-number 
+                  v-model:value="overlayN" 
+                  size="tiny" 
+                  class="overlay-input"
+                  :min="0" 
+                  :max="20" 
+                  placeholder="0=全部"
+                  @update:value="updateChart(activeStock)"
+                />
+              </div>
+            </div>
+            
+            <div v-if="!tdxPath" class="chart-placeholder">
+              <n-text depth="3">请先在设置中配置通达信路径以开启分时对比</n-text>
+            </div>
+            <v-chart 
+              v-else-if="sectorChartOption" 
+              class="intraday-chart" 
+              :option="sectorChartOption" 
+              autoresize 
+            />
+            <div v-else-if="chartLoading" class="chart-placeholder">
+              <n-spin size="small" />
+              <n-text depth="3" style="margin-left: 8px">正在从本地解析分时数据...</n-text>
+            </div>
+            <div v-else class="chart-placeholder">
+              <n-text depth="3">本地未找到该日分时数据 (请确认通达信已下载盘后数据)</n-text>
+            </div>
+          </div>
+
+          <n-data-table
+            size="small"
+            :columns="sectorStockColumns"
+            :data="sortedSectorStocks"
+            :loading="sectorLoading"
+            :bordered="false"
+            :max-height="'calc(100vh - 450px)'"
+            class="detail-table"
+            :row-props="rowProps"
+          />
+        </div>
+      </n-drawer-content>
+    </n-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
-  NButton, NIcon, NInputNumber, NSpin, NEmpty, NSpace, useMessage, NAlert 
+  NButton, NIcon, NInputNumber, NSpin, NEmpty, NSpace, useMessage, NAlert,
+  NDrawer, NDrawerContent, NTag, NDataTable, NText
 } from 'naive-ui'
 import { RefreshOutline } from '@vicons/ionicons5'
 import { useSentimentCycle } from '@/composables/useSentimentCycle'
 import { useAppStore } from '@/stores'
+import { useStockActions } from '@/composables/useStockActions'
+import { useSurgeMinuteChart } from '@/composables/useSurgeMinuteChart'
+import BaseChart from '@/components/common/BaseChart.vue'
+import VChart from 'vue-echarts'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart } from 'echarts/charts'
+import {
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  VisualMapComponent
+} from 'echarts/components'
+import type { SurgeStock } from '@common/types/market'
+
+use([
+  CanvasRenderer,
+  LineChart,
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  VisualMapComponent
+])
 
 const router = useRouter()
 const message = useMessage()
 const appStore = useAppStore()
 const displayLimit = ref(25)
 const { loading, sentimentMatrix, loadData } = useSentimentCycle()
+const { handleStockClick: openInPreferredApp } = useStockActions()
 
 const tdxPath = computed(() => appStore.settings.tdxPath)
+
+// 抽屉状态
+const showDrawer = ref(false)
+const activeSector = ref<{ name: string; count: number } | null>(null)
+const activeDate = ref('')
+const sectorStocks = ref<SurgeStock[]>([])
+const sectorLoading = ref(false)
+const drawerWidth = ref(800)
+let isResizing = false
+const overlayN = ref(0)
+
+const sortedSectorStocks = computed(() => {
+  if (!activeSector.value) return []
+  return [...sectorStocks.value].sort((a, b) => {
+    const getBoardCount = (row: SurgeStock) => {
+      return row.parsedRawData?.limit_up_days || 0
+    }
+    if (a.is_limit_up !== b.is_limit_up) return b.is_limit_up - a.is_limit_up
+    if (a.is_limit_up) {
+      const countA = getBoardCount(a)
+      const countB = getBoardCount(b)
+      if (countB !== countA) return countB - countA
+    }
+    return (b.change_percent || 0) - (a.change_percent || 0)
+  })
+})
+
+const { chartOption: sectorChartOption, chartLoading, activeStock, updateChart } = useSurgeMinuteChart(tdxPath, activeDate, overlayN, sortedSectorStocks)
+
+const onResizerMouseDown = (e: MouseEvent) => {
+  isResizing = true
+  document.addEventListener('mousemove', onResizerMouseMove)
+  document.addEventListener('mouseup', onResizerMouseUp)
+  document.body.style.cursor = 'col-resize'
+  document.body.style.userSelect = 'none'
+}
+
+const onResizerMouseMove = (e: MouseEvent) => {
+  if (!isResizing) return
+  const newWidth = window.innerWidth - e.clientX
+  if (newWidth > 300 && newWidth < 1200) {
+    drawerWidth.value = newWidth
+  }
+}
+
+const onResizerMouseUp = () => {
+  isResizing = false
+  document.removeEventListener('mousemove', onResizerMouseMove)
+  document.removeEventListener('mouseup', onResizerMouseUp)
+  document.body.style.cursor = ''
+  document.body.style.userSelect = ''
+}
+
+const openSectorDetail = async (sector: { name: string; count: number }, date: string) => {
+  activeSector.value = sector
+  activeDate.value = date
+  showDrawer.value = true
+  
+  sectorLoading.value = true
+  try {
+    const stocks = await window.electronAPI.db.getStockPool({ poolName: 'limit_up', date })
+    sectorStocks.value = stocks.filter(s => 
+      (s.reason_info || '').includes(sector.name)
+    ).map(s => ({
+      ...s,
+      parsedRawData: JSON.parse(s.raw_data || '{}'),
+      is_limit_up: true
+    }))
+    
+    if (sectorStocks.value.length > 0) {
+      const list = [...sectorStocks.value].sort((a, b) => b.is_limit_up - a.is_limit_up)
+      updateChart(list[0])
+    } else {
+      updateChart(null)
+    }
+  } catch (err) {
+    console.error('Failed to fetch sector stocks:', err)
+    sectorStocks.value = []
+    updateChart(null)
+  } finally {
+    sectorLoading.value = false
+  }
+}
+
+const handleStockClick = (row: SurgeStock) => {
+  openInPreferredApp(row.symbol)
+}
+
+const rowProps = (row: SurgeStock) => {
+  return {
+    style: 'cursor: pointer;',
+    onClick: (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (target.classList.contains('stock-clickable')) return
+      updateChart(row)
+    }
+  }
+}
+
+const sectorStockColumns = [
+  {
+    title: '股票',
+    key: 'stock_name',
+    width: 140,
+    render(row: SurgeStock) {
+      return h('div', [
+        h(
+          NText, 
+          { 
+            strong: true, 
+            class: 'stock-clickable',
+            onClick: (e: MouseEvent) => {
+              e.stopPropagation()
+              handleStockClick(row)
+            }
+          }, 
+          { default: () => row.stock_name }
+        ),
+        h('div', { style: 'font-size: 11px; color: #999' }, row.symbol)
+      ])
+    }
+  },
+  {
+    title: '高度',
+    key: 'height',
+    width: 70,
+    render(row: SurgeStock) {
+      const count = row.parsedRawData?.limit_up_days || row.board_count || 1
+      return h(NTag, { type: 'error', size: 'tiny', bordered: false, round: true }, { default: () => `${count}板` })
+    }
+  },
+  {
+    title: '涨跌幅',
+    key: 'change_percent',
+    width: 80,
+    render(row: SurgeStock) {
+      let val = row.change_percent || 0
+      const color = val > 0 ? '#ef4444' : val < 0 ? '#22c55e' : 'inherit'
+      if (Math.abs(val) < 100) {
+        val = val * 100
+      }
+      return h('span', { style: { color, fontWeight: 'bold' } }, 
+        `${val > 0 ? '+' : ''}${val.toFixed(2)}%`
+      )
+    }
+  },
+  {
+    title: '涨停原因',
+    key: 'reason',
+    render(row: SurgeStock) {
+      const reason = row.parsedRawData?.surge_reason?.stock_reason || row.reason_info || '-'
+      return h(NText, { depth: 3, style: 'font-size: 12px' }, { default: () => reason })
+    }
+  }
+]
 
 const latestTradingDate = ref('')
 
@@ -221,24 +512,27 @@ const getHeatmapStyle = (val: number | undefined, type: string) => {
   if (val === undefined) return {}
   let ratio = 0
   if (type === 'turnover') {
-    // 假设 1万亿以上算热
     ratio = Math.min(val / 1500000000000, 1)
     return { backgroundColor: `rgba(239, 68, 68, ${ratio * 0.4})`, color: ratio > 0.6 ? '#fff' : 'inherit' }
   }
   if (type === 'limitUp') {
-    ratio = Math.min(val / 100, 1) // 100只涨停算疯狂
+    ratio = Math.min(val / 100, 1)
     return { backgroundColor: `rgba(239, 68, 68, ${ratio * 0.8})`, color: ratio > 0.4 ? '#fff' : 'inherit' }
   }
+  if (type === 'limitDown') {
+    ratio = Math.min(val / 50, 1)
+    return { backgroundColor: `rgba(34, 197, 94, ${ratio * 0.8})`, color: ratio > 0.4 ? '#fff' : 'inherit' }
+  }
   if (type === 'broken') {
-    ratio = Math.min(val, 0.5) // 50%炸板算地狱
+    ratio = Math.min(val, 0.5)
     return { backgroundColor: `rgba(34, 197, 94, ${ratio * 1.5})`, color: ratio > 0.3 ? '#fff' : 'inherit' }
   }
   if (type === 'bigMeat') {
-    ratio = Math.min(val / 50, 1) // 50只大肉算高潮
+    ratio = Math.min(val / 50, 1)
     return { backgroundColor: `rgba(239, 68, 68, ${ratio * 0.3})` }
   }
   if (type === 'bigFace') {
-    ratio = Math.min(val / 50, 1) // 50只大面算极点
+    ratio = Math.min(val / 50, 1)
     return { backgroundColor: `rgba(34, 197, 94, ${ratio * 0.3})` }
   }
   return {}
@@ -282,6 +576,243 @@ const getSectorStyle = (count: number) => {
 }
 
 const goToMarketData = () => router.push('/market/data')
+
+const chartOption = computed(() => {
+  const dates = sentimentMatrix.value.map(d => d.date.substring(5))
+  const maxBoardData = sentimentMatrix.value.map(d => d.maxBoard || 0)
+  const secondMaxBoardData = sentimentMatrix.value.map(d => d.secondMaxBoard || 0)
+  const limitUpData = sentimentMatrix.value.map(d => d.limitUpCount || 0)
+  const limitDownData = sentimentMatrix.value.map(d => d.limitDownCount || 0)
+  const minDownBoardData = sentimentMatrix.value.map(d => d.minDownBoard || 0)
+  const secondMinDownBoardData = sentimentMatrix.value.map(d => d.secondMinDownBoard || 0)
+
+  return {
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e8e8e8',
+      borderWidth: 1,
+      textStyle: {
+        color: '#333'
+      },
+      axisPointer: {
+        type: 'cross',
+        crossStyle: {
+          color: '#999'
+        }
+      }
+    },
+    legend: {
+      data: ['最高板', '次高板', '跌停最低板', '跌停次低板', '涨停数', '跌停数'],
+      top: 10,
+      textStyle: {
+        color: '#666'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: 50,
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: dates,
+      axisLine: {
+        lineStyle: {
+          color: '#e8e8e8'
+        }
+      },
+      axisLabel: {
+        color: '#666',
+        rotate: 45,
+        fontSize: 12
+      },
+      axisTick: {
+        alignWithLabel: true
+      }
+    },
+    yAxis: [
+      {
+        type: 'value',
+        name: '连板数',
+        position: 'left',
+        axisLine: {
+          show: true,
+          lineStyle: {
+            color: '#1890ff'
+          }
+        },
+        axisLabel: {
+          color: '#666'
+        },
+        splitLine: {
+          lineStyle: {
+            color: '#f0f0f0',
+            type: 'dashed'
+          }
+        }
+      },
+      {
+        type: 'value',
+        name: '涨跌停数',
+        position: 'right',
+        axisLine: {
+          show: true,
+          lineStyle: {
+            color: '#52c41a'
+          }
+        },
+        axisLabel: {
+          color: '#666'
+        },
+        splitLine: {
+          show: false
+        }
+      }
+    ],
+    series: [
+      {
+        name: '最高板',
+        type: 'line',
+        smooth: false,
+        symbol: 'circle',
+        symbolSize: 8,
+        yAxisIndex: 0,
+        itemStyle: {
+          color: '#ef4444',
+          borderWidth: 2,
+          borderColor: '#fff'
+        },
+        lineStyle: {
+          color: '#ef4444',
+          width: 3
+        },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(239, 68, 68, 0.3)' },
+              { offset: 1, color: 'rgba(239, 68, 68, 0.05)' }
+            ]
+          }
+        },
+        data: maxBoardData
+      },
+      {
+        name: '次高板',
+        type: 'line',
+        smooth: false,
+        symbol: 'circle',
+        symbolSize: 8,
+        yAxisIndex: 0,
+        itemStyle: {
+          color: '#f59e0b',
+          borderWidth: 2,
+          borderColor: '#fff'
+        },
+        lineStyle: {
+          color: '#f59e0b',
+          width: 3,
+          type: 'dashed'
+        },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(245, 158, 11, 0.2)' },
+              { offset: 1, color: 'rgba(245, 158, 11, 0.05)' }
+            ]
+          }
+        },
+        data: secondMaxBoardData
+      },
+      {
+        name: '涨停数',
+        type: 'line',
+        smooth: false,
+        symbol: 'circle',
+        symbolSize: 8,
+        yAxisIndex: 1,
+        itemStyle: {
+          color: '#1890ff',
+          borderWidth: 2,
+          borderColor: '#fff'
+        },
+        lineStyle: {
+          color: '#1890ff',
+          width: 2
+        },
+        data: limitUpData
+      },
+      {
+        name: '跌停最低板',
+        type: 'line',
+        smooth: false,
+        symbol: 'circle',
+        symbolSize: 8,
+        yAxisIndex: 0,
+        itemStyle: {
+          color: '#52c41a',
+          borderWidth: 2,
+          borderColor: '#fff'
+        },
+        lineStyle: {
+          color: '#52c41a',
+          width: 2
+        },
+        data: minDownBoardData
+      },
+      {
+        name: '跌停次低板',
+        type: 'line',
+        smooth: false,
+        symbol: 'circle',
+        symbolSize: 8,
+        yAxisIndex: 0,
+        itemStyle: {
+          color: '#16a34a',
+          borderWidth: 2,
+          borderColor: '#fff'
+        },
+        lineStyle: {
+          color: '#16a34a',
+          width: 2,
+          type: 'dashed'
+        },
+        data: secondMinDownBoardData
+      },
+      {
+        name: '跌停数',
+        type: 'line',
+        smooth: false,
+        symbol: 'circle',
+        symbolSize: 8,
+        yAxisIndex: 1,
+        itemStyle: {
+          color: '#52c41a',
+          borderWidth: 2,
+          borderColor: '#fff'
+        },
+        lineStyle: {
+          color: '#52c41a',
+          width: 2,
+          type: 'dashed'
+        },
+        data: limitDownData
+      }
+    ]
+  }
+})
 </script>
 
 <style scoped>
@@ -318,6 +849,17 @@ const goToMarketData = () => router.push('/market/data')
 
 .path-warning {
   max-width: 300px;
+}
+
+/* 图表样式 */
+.chart-wrapper {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+  padding: 16px;
+  margin-bottom: 20px;
+  height: 320px;
 }
 
 /* 表格样式 */
@@ -384,6 +926,22 @@ const goToMarketData = () => router.push('/market/data')
 .face-cell { color: #22c55e; font-weight: bold; }
 .profit-cell { font-weight: 900; }
 
+.high-board-cell {
+  font-weight: 900;
+  font-size: 16px;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 6px;
+}
+
+.down-board-cell {
+  font-weight: 900;
+  font-size: 16px;
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+  border-radius: 6px;
+}
+
 .text-red { color: #ef4444; font-weight: bold; }
 .text-green { color: #22c55e; font-weight: bold; }
 
@@ -443,5 +1001,133 @@ const goToMarketData = () => router.push('/market/data')
   justify-content: center;
   gap: 16px;
   background: #fff;
+}
+
+/* 抽屉样式 */
+.drawer-resizer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 10;
+  transition: background-color 0.2s;
+}
+
+.drawer-resizer:hover,
+.drawer-resizer:active {
+  background-color: rgba(59, 130, 246, 0.3);
+  border-left: 1px solid #3b82f6;
+}
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.plate-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--primary-color);
+}
+
+.date-tag {
+  margin-left: 12px;
+  font-family: tabular-nums;
+}
+
+.drawer-body {
+  padding-top: 16px;
+}
+
+/* 详情图表区域 */
+.chart-container {
+  height: 340px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-toolbar {
+  height: 40px;
+  padding: 0 16px;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.active-stock-label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.active-stock-label .highlight {
+  color: #ef4444;
+  font-weight: 800;
+  margin: 0 4px;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.overlay-label {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.overlay-input {
+  width: 90px;
+}
+
+.chart-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+}
+
+.intraday-chart {
+  flex: 1;
+  width: 100%;
+}
+
+.detail-table {
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+}
+
+.stock-clickable {
+  cursor: pointer;
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.stock-clickable:hover {
+  color: #1d4ed8;
+}
+
+.sector-tag {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sector-tag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
 }
 </style>

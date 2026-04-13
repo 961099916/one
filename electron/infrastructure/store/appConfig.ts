@@ -51,7 +51,6 @@ export interface AppConfig {
   enableTelemetry: boolean
 
   // 模型设置
-  activeModel: string
   generationParams: GenerationParams
 
   // 聊天设置
@@ -68,6 +67,19 @@ export interface AppConfig {
   // 更新设置
   updateMirror: 'direct' | 'ghproxy' | 'custom'
   customMirrorUrl: string
+
+  // AI 服务商设置
+  activeAiProvider: 'openai' | 'deepseek'
+  openAiConfig: {
+    apiKey: string
+    baseUrl: string
+    model: string
+  }
+  deepSeekConfig: {
+    apiKey: string
+    baseUrl: string
+    model: string
+  }
 }
 
 // ==================== 默认配置 ====================
@@ -95,7 +107,6 @@ const defaultConfig: AppConfig = {
   sidebarWidth: 240,
   autoCheckUpdate: true,
   enableTelemetry: false,
-  activeModel: '',
   generationParams: DEFAULT_GENERATION_PARAMS,
   currentSessionId: '',
   tdxPath: '',
@@ -108,7 +119,18 @@ const defaultConfig: AppConfig = {
     port: 7890
   },
   updateMirror: 'direct',
-  customMirrorUrl: ''
+  customMirrorUrl: '',
+  activeAiProvider: 'deepseek',
+  openAiConfig: {
+    apiKey: '',
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'gpt-4o'
+  },
+  deepSeekConfig: {
+    apiKey: '',
+    baseUrl: 'https://api.deepseek.com',
+    model: 'deepseek-chat'
+  }
 }
 
 // ==================== Store 实例 ====================
@@ -198,19 +220,6 @@ export const appConfigOps = {
 // ==================== 模型设置管理 ====================
 
 export const modelConfigOps = {
-  /**
-   * 获取当前激活的模型
-   */
-  getActiveModel(): string {
-    return store.get('activeModel', '')
-  },
-
-  /**
-   * 设置当前激活的模型
-   */
-  setActiveModel(modelName: string): void {
-    store.set('activeModel', modelName)
-  },
 
   /**
    * 获取生成参数

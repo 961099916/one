@@ -4,7 +4,7 @@
  */
 import log from 'electron-log'
 import { getDB } from '../connection'
-import type { MessageRow } from '../types'
+import type { MessageRow } from '@common/types'
 
 /**
  * 消息仓储操作
