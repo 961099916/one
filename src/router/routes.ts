@@ -8,6 +8,7 @@ import SettingsLayout from '@/views/SettingsLayout.vue'
 import ModelSettings from '@/views/Settings.vue'
 import AppSettings from '@/views/AppSettings.vue'
 import About from '@/views/About.vue'
+import Login from '@/views/Login.vue'
 import { RoutePath, RouteName } from '@/constants'
 
 /**
@@ -173,6 +174,15 @@ export const baseRoutes: AppRouteRecordRaw[] = [
       },
     ],
   },
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login,
+    meta: {
+      title: '登录',
+      requiresAuth: false
+    }
+  }
 ]
 
 /**

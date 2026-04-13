@@ -1,5 +1,6 @@
 import { app, ipcMain, shell, dialog, BrowserWindow } from 'electron'
 import log from 'electron-log'
+import os from 'os'
 import { IpcChannel } from '@common/constants'
 
 export function initAppHandlers(): void {
@@ -73,6 +74,19 @@ export function initAppHandlers(): void {
       return null
     }
     return result.filePaths[0]
+  })
+
+  ipcMain.handle(IpcChannel.APP_GET_MAC_ADDRESS, () => {
+    log.info('[IPC] 调用 APP_GET_MAC_ADDRESS')
+    const interfaces = os.networkInterfaces()
+    for (const name of Object.keys(interfaces)) {
+      for (const iface of interfaces[name]!) {
+        if (!iface.internal && iface.mac && iface.mac !== '00:00:00:00:00:00') {
+          return iface.mac
+        }
+      }
+    }
+    return 'UNKNOWN_MAC'
   })
 
   // ==================== 窗口控制 ====================

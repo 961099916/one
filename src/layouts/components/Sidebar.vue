@@ -41,8 +41,11 @@ function handleToggle() {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: var(--bg-sidebar);
-  border-right: 1px solid var(--border-color);
+  background-color: var(--bg-sidebar, rgba(255, 255, 255, 0.7));
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.05);
+  z-index: 100;
 }
 
 .sidebar-header {

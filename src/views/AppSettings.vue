@@ -313,6 +313,22 @@
           </div>
           <button class="btn btn-danger-ghost" @click="handleReset">重置</button>
         </div>
+
+        <div class="setting-divider" />
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">同步菜单到 Supabase</span>
+            <span class="setting-desc">将当前本地硬编码的菜单配置全量覆盖上传到 Supabase 数据库</span>
+          </div>
+          <button 
+            class="btn btn-primary-ghost" 
+            :disabled="isSyncing"
+            @click="handleSyncMenus"
+          >
+            {{ isSyncing ? '同步中...' : '同步菜单' }}
+          </button>
+        </div>
       </div>
     </section>
   </div>
@@ -320,13 +336,14 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useAppStore } from '@/stores'
+import { useAppStore, useAuthStore } from '@/stores'
 import { log } from '@/utils/logger'
 import { useMessage } from 'naive-ui'
 
 const appStore = useAppStore()
+const authStore = useAuthStore()
 const message = useMessage()
-const isTesting = ref(false)
+const isSyncing = ref(false)
 
 const settings = computed(() => appStore.settings)
 
@@ -433,6 +450,22 @@ function handleReset() {
     if (window.electronAPI) {
       window.electronAPI.app.setLoginItem(false)
     }
+  }
+}
+
+async function handleSyncMenus() {
+  isSyncing.value = true
+  try {
+    const res = await authStore.syncLocalMenus()
+    if (res.success) {
+      message.success('菜单同步成功')
+    } else {
+      message.error(`同步失败: ${res.error}`)
+    }
+  } catch (err: any) {
+    message.error(`意外错误: ${err.message}`)
+  } finally {
+    isSyncing.value = false
   }
 }
 </script>

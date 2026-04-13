@@ -30,6 +30,7 @@ export const IpcChannel = {
   APP_GET_LOGIN_ITEM: 'app:get-login-item',
   APP_PROXY_FETCH: 'app:proxy-fetch',
   APP_SELECT_DIRECTORY: 'app:select-directory',
+  APP_GET_MAC_ADDRESS: 'app:get-mac-address',
 
   // 自动更新
   UPDATE_CHECK: 'update:check',

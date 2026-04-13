@@ -18,9 +18,21 @@ interface ElectronDbAPI {
   addMessage(sessionId: string, role: string, content: string, createdAt: number): Promise<unknown>
   updateLastMessage(sessionId: string, content: string): Promise<unknown>
   clearMessages(sessionId: string): Promise<unknown>
-  getConfig(key: string): Promise<string | null>
-  setConfig(key: string, value: string): Promise<unknown>
-  getAllConfig(): Promise<Record<string, string>>
+  getMarketData(params: unknown): Promise<unknown>
+  syncMarketData(params: unknown): Promise<unknown>
+  getAllTradingDays(): Promise<string[]>
+  updateTradingDay(params: { date: string; isTrading: boolean }): Promise<unknown>
+  getStockPool(params: { poolName: string; date: string }): Promise<unknown>
+  syncStockPool(params: { poolName: string; date: string }): Promise<unknown>
+  batchSyncXuanguBao(params: { startDate: string; endDate: string; force?: boolean }): Promise<unknown>
+  getSurgePlates(params: { date: string; timestamp?: number }): Promise<unknown>
+  getSurgeStocks(params: { date: string; timestamp?: number }): Promise<unknown>
+  syncSurgeData(date: string): Promise<unknown>
+  getLatestSurgeTimestamp(date: string): Promise<number>
+  getSurgeTimestamps(date: string): Promise<number[]>
+  getSurgeHistoricalDates(): Promise<string[]>
+  getSentimentCycle(params: unknown): Promise<unknown>
+  getLatestTradingDay(): Promise<string>
 }
 
 interface UpdateStatusPayload {
@@ -58,6 +70,44 @@ interface ElectronAppAPI {
   relaunch(): Promise<void>
   setLoginItem(enabled: boolean): Promise<unknown>
   getLoginItem(): Promise<boolean>
+  proxyFetch(url: string): Promise<any>
+  selectDirectory(): Promise<string | null>
+  getMacAddress(): Promise<string>
+}
+
+interface ElectronConfigAPI {
+  get(key: string): Promise<any>
+  set(key: string, value: unknown): Promise<void>
+  getAll(): Promise<any>
+  reset(): Promise<void>
+}
+
+interface ElectronFileAPI {
+  save(sourcePath: string, originalName: string): Promise<string>
+  saveImage(sourcePath: string, originalName: string): Promise<string>
+  saveBase64Image(base64Data: string, extension?: string): Promise<string>
+  getPath(relativePath: string): Promise<string>
+  exists(relativePath: string): Promise<boolean>
+  delete(relativePath: string): Promise<void>
+  read(relativePath: string): Promise<string | Buffer>
+}
+
+interface ElectronWindowAPI {
+  minimize(): Promise<void>
+  maximize(): Promise<void>
+  unmaximize(): Promise<void>
+  close(): Promise<void>
+  isMaximized(): Promise<boolean>
+  setTitlebarColor(color: string, symbolColor: string): Promise<void>
+}
+
+interface ElectronTdxAPI {
+  getMinuteData(params: { tdxPath: string; symbol: string; date: string; period?: '1' | '5' }): Promise<any>
+  openStock(symbol: string): Promise<void>
+}
+
+interface ElectronThsAPI {
+  openStock(symbol: string): Promise<void>
 }
 
 interface Window {
@@ -68,5 +118,10 @@ interface Window {
     db: ElectronDbAPI
     app: ElectronAppAPI
     updater: ElectronUpdaterAPI
+    config: ElectronConfigAPI
+    file: ElectronFileAPI
+    tdx: ElectronTdxAPI
+    ths: ElectronThsAPI
+    window: ElectronWindowAPI
   }
 }

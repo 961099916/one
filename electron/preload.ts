@@ -99,6 +99,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getLoginItem: () => ipcRenderer.invoke(IpcChannel.APP_GET_LOGIN_ITEM),
     proxyFetch: (url: string) => ipcRenderer.invoke(IpcChannel.APP_PROXY_FETCH, url),
     selectDirectory: () => ipcRenderer.invoke(IpcChannel.APP_SELECT_DIRECTORY),
+    getMacAddress: () => ipcRenderer.invoke(IpcChannel.APP_GET_MAC_ADDRESS),
   },
 
   // ---------- 自动更新 ----------
